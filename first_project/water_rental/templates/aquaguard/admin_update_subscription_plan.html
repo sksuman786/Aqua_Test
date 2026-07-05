@@ -1,0 +1,466 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}Edit {{ plan.plan_name }} - Subscription Plan{% endblock %}
+
+{% block content %}
+<style>
+    .form-container {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        color: white;
+        padding: 40px 30px;
+        min-height: 100vh;
+        margin-left: 0;
+        width: 100%;
+        border-radius: 0;
+    }
+
+    .form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 40px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .form-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #0ea5e9;
+        margin: 0;
+    }
+
+    .form-wrapper {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 40px;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-group label {
+        display: block;
+        color: #e2e8f0;
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(30, 41, 59, 0.8);
+        color: white;
+        font-size: 14px;
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+        color: #64748b;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .form-group.full {
+        grid-column: 1 / -1;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .checkbox-group input {
+        width: auto;
+        margin: 0;
+    }
+
+    .features-section {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+    }
+
+    .features-section h3 {
+        color: #0ea5e9;
+        margin-bottom: 15px;
+        font-size: 16px;
+    }
+
+    .feature-input-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .feature-input-group input {
+        flex: 1;
+    }
+
+    .btn-remove-feature {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid #ef4444;
+        padding: 10px 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-remove-feature:hover {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-add-feature {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid #22c55e;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+
+    .btn-add-feature:hover {
+        background: #22c55e;
+        color: white;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 30px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex: 1;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-cancel {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 12px 30px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex: 1;
+        text-align: center;
+    }
+
+    .btn-cancel:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: #667eea;
+    }
+
+    .error-message {
+        background: rgba(239, 68, 68, 0.2);
+        border-left: 4px solid #ef4444;
+        color: #fecaca;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .error-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .error-list li {
+        padding: 8px 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .error-list li:before {
+        content: "✕";
+        color: #ef4444;
+        font-weight: bold;
+        margin-right: 10px;
+        font-size: 16px;
+    }
+
+    .help-text {
+        font-size: 12px;
+        color: #cbd5e1;
+        margin-top: 5px;
+    }
+
+    .info-box {
+        background: rgba(14, 165, 233, 0.1);
+        border-left: 4px solid #0ea5e9;
+        color: #e0f2fe;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .form-wrapper {
+            padding: 20px;
+        }
+
+        .form-title {
+            font-size: 24px;
+        }
+    }
+</style>
+
+<div class="form-container">
+    <div class="form-header">
+        <div>
+            <h1 class="form-title">✏️ Edit Subscription Plan</h1>
+            <p style="margin: 10px 0 0 0; color: #cbd5e1; font-size: 14px;">Update "{{ plan.plan_name }}" details</p>
+        </div>
+    </div>
+
+    <div class="form-wrapper">
+        {% if errors %}
+        <div class="error-message">
+            <ul class="error-list">
+                {% for error in errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="info-box">
+            <strong>ℹ️ Note:</strong> Changes to existing plans will affect customers currently using this plan.
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="plan_name">Plan Name *</label>
+                    <input type="text" id="plan_name" name="plan_name" placeholder="e.g., Basic, Standard, Premium" value="{{ form_data.plan_name|default:plan.plan_name }}" required>
+                    <p class="help-text">Unique name for this subscription plan</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="status" name="status" value="true" {% if form_data.status|default:plan.status %}checked{% endif %}>
+                        <label for="status" style="margin: 0; display: inline;">Active</label>
+                    </div>
+                    <p class="help-text">Check to make this plan active</p>
+                </div>
+            </div>
+
+            <div class="form-group full">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" placeholder="Describe this plan..." rows="3">{{ form_data.description|default:plan.description }}</textarea>
+                <p class="help-text">Optional detailed description of the plan benefits</p>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="price">Price (₹) *</label>
+                    <input type="number" id="price" name="price" placeholder="e.g., 200" step="0.01" value="{{ form_data.price|default:plan.price }}" required>
+                    <p class="help-text">Price in Indian Rupees</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="litres_allocated">Litres Allocated *</label>
+                    <input type="number" id="litres_allocated" name="litres_allocated" placeholder="e.g., 500" value="{{ form_data.litres_allocated|default:plan.litres_allocated }}" required>
+                    <p class="help-text">Water litres allocated in this plan</p>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="duration_days">Duration (Days) *</label>
+                    <input type="number" id="duration_days" name="duration_days" placeholder="e.g., 30" value="{{ form_data.duration_days|default:plan.duration_days }}" required>
+                    <p class="help-text">Plan validity in days</p>
+                </div>
+
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="is_popular" name="is_popular" {% if form_data.is_popular|default:plan.is_popular %}checked{% endif %}>
+                        <label for="is_popular" style="margin: 0;">⭐ Mark as Popular</label>
+                    </div>
+                    <p class="help-text">Show this plan prominently</p>
+                </div>
+            </div>
+
+            <!-- Features Section -->
+            <div class="features-section">
+                <h3>📋 Features</h3>
+                <div id="features-list">
+                    {% if form_features %}
+                        {% for feature in form_features %}
+                        <div class="feature-input-group">
+                            <input type="text" name="features[]" class="feature-input" placeholder="e.g., 24/7 Support, Water Quality Monitoring" value="{{ feature }}">
+                            <button type="button" class="btn-remove-feature" onclick="removeFeature(this)">Remove</button>
+                        </div>
+                        {% endfor %}
+                    {% elif plan.description_features %}
+                        {% for feature in plan.description_features %}
+                        <div class="feature-input-group">
+                            <input type="text" name="features[]" class="feature-input" placeholder="e.g., 24/7 Support, Water Quality Monitoring" value="{{ feature }}">
+                            <button type="button" class="btn-remove-feature" onclick="removeFeature(this)">Remove</button>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="feature-input-group">
+                            <input type="text" name="features[]" class="feature-input" placeholder="e.g., 24/7 Support, Water Quality Monitoring">
+                            <button type="button" class="btn-remove-feature" onclick="removeFeature(this)">Remove</button>
+                        </div>
+                    {% endif %}
+                </div>
+                <button type="button" class="btn-add-feature" onclick="addFeature()">+ Add Feature</button>
+            </div>
+
+            <!-- Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">✅ Save Changes</button>
+                <a href="{% url 'aquaguard:subscription-plan-detail' plan.id %}" class="btn-cancel">✕ Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function addFeature() {
+    const featuresList = document.getElementById('features-list');
+    const featureGroup = document.createElement('div');
+    featureGroup.className = 'feature-input-group';
+    featureGroup.innerHTML = `
+        <input type="text" name="features[]" class="feature-input" placeholder="e.g., 24/7 Support, Water Quality Monitoring">
+        <button type="button" class="btn-remove-feature" onclick="removeFeature(this)">Remove</button>
+    `;
+    featuresList.appendChild(featureGroup);
+}
+
+function removeFeature(button) {
+    button.parentElement.remove();
+}
+
+// Client-side validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const submitBtn = document.querySelector('.btn-submit');
+
+    form.addEventListener('submit', function(e) {
+        // Clear previous errors
+        const existingErrors = document.querySelectorAll('.field-error');
+        existingErrors.forEach(error => error.remove());
+
+        let hasErrors = false;
+
+        // Validate required fields
+        const requiredFields = [
+            { id: 'plan_name', name: 'Plan Name' },
+            { id: 'price', name: 'Price' },
+            { id: 'litres_allocated', name: 'Litres Allocated' },
+            { id: 'duration_days', name: 'Duration' }
+        ];
+
+        requiredFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (!element.value.trim()) {
+                showFieldError(element, `${field.name} is required`);
+                hasErrors = true;
+            }
+        });
+
+        // Validate numeric fields
+        const numericFields = [
+            { id: 'price', name: 'Price', min: 0.01 },
+            { id: 'litres_allocated', name: 'Litres Allocated', min: 1 },
+            { id: 'duration_days', name: 'Duration', min: 1 }
+        ];
+
+        numericFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            const value = parseFloat(element.value);
+            if (element.value && (isNaN(value) || value < field.min)) {
+                showFieldError(element, `${field.name} must be a valid number greater than ${field.min - 1}`);
+                hasErrors = true;
+            }
+        });
+
+        if (hasErrors) {
+            e.preventDefault();
+            submitBtn.textContent = '❌ Fix Errors';
+            setTimeout(() => {
+                submitBtn.textContent = '✅ Save Changes';
+            }, 3000);
+            return false;
+        }
+
+        // Show loading state
+        submitBtn.textContent = '⏳ Saving...';
+        submitBtn.disabled = true;
+    });
+});
+
+function showFieldError(element, message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'field-error';
+    errorDiv.style.cssText = `
+        color: #ef4444;
+        font-size: 12px;
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+    `;
+    errorDiv.innerHTML = `<span style="margin-right: 5px;">⚠️</span>${message}`;
+    element.parentNode.appendChild(errorDiv);
+}
+</script>
+
+{% endblock %}

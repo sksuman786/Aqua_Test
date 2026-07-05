@@ -1,0 +1,428 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}Customer Search Results - AquaGuard{% endblock %}
+
+{% block content %}
+<style>
+    .search-results {
+        background: white;
+        padding: 30px;
+    }
+
+    .search-header {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .search-header h2 {
+        color: #667eea;
+        margin-bottom: 10px;
+    }
+
+    .search-info {
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    .results-count {
+        color: #0ea5e9;
+        font-weight: 600;
+    }
+
+    .customer-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+
+    .customer-card:hover {
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .customer-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #475569;
+    }
+
+    .info-value {
+        color: #1e293b;
+    }
+
+    .customer-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #764ba2;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 60px 20px;
+        color: #64748b;
+    }
+
+    .no-results-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-active {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-blocked {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .device-status {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .device-online {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .device-offline {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .compact-card {
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .compact-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .compact-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .compact-label {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .compact-value {
+        font-size: 16px;
+        color: #1e293b;
+        font-weight: 600;
+    }
+
+    .btn-more {
+        padding: 10px 20px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-more:hover {
+        background: #764ba2;
+        transform: translateY(-2px);
+    }
+
+    .detail-section {
+        display: none;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 2px solid #e2e8f0;
+    }
+
+    .detail-section.active {
+        display: block;
+    }
+
+    .detail-boxes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .detail-box {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 20px;
+    }
+
+    .detail-box h3 {
+        color: #667eea;
+        margin-bottom: 15px;
+        font-size: 18px;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 10px;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        color: #64748b;
+        font-weight: 600;
+    }
+
+    .detail-value {
+        color: #1e293b;
+        text-align: right;
+    }
+</style>
+
+<script>
+    function toggleDetails(customerId) {
+        const detailSection = document.getElementById('details-' + customerId);
+        const button = document.getElementById('btn-' + customerId);
+        
+        if (detailSection.classList.contains('active')) {
+            detailSection.classList.remove('active');
+            button.textContent = '📋 More Details';
+        } else {
+            detailSection.classList.add('active');
+            button.textContent = '📋 Hide Details';
+        }
+    }
+</script>
+
+<div class="search-results">
+    <div class="search-header">
+        <h2> Customer Search Results</h2>
+        <div class="search-info">
+            {% if query %}
+                Searched for "<strong>{{ query }}</strong>" in <strong>{{ search_type }}</strong>
+                <br>
+                <span class="results-count">{{ customer_data|length }} result{{ customer_data|length|pluralize }} found</span>
+            {% else %}
+                <span style="color: #ef4444;">Please enter a search term</span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if customer_data %}
+        {% for data in customer_data %}
+        <div class="compact-card">
+            <!-- Compact View -->
+            <div class="compact-info">
+                <div class="compact-item">
+                    <span class="compact-label">Name</span>
+                    <span class="compact-value">{{ data.customer.name }}</span>
+                </div>
+                <div class="compact-item">
+                    <span class="compact-label">Phone</span>
+                    <span class="compact-value">{{ data.customer.phone_number }}</span>
+                </div>
+                <div class="compact-item">
+                    <span class="compact-label">Email</span>
+                    <span class="compact-value">{{ data.customer.email }}</span>
+                </div>
+                <div class="compact-item">
+                    <span class="compact-label">Device Status</span>
+                    <span class="device-status {% if data.customer.device_status == 'online' %}device-online{% else %}device-offline{% endif %}">
+                        {{ data.customer.device_status|upper }}
+                    </span>
+                </div>
+                <div class="compact-item">
+                    <span class="compact-label">Last Recharge</span>
+                    <span class="compact-value">
+                        {% if data.last_recharge %}
+                            {{ data.last_recharge.recharge_date|date:"M d, Y" }}
+                        {% else %}
+                            No recharge
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="compact-item">
+                    <span class="compact-label">Last 24hr Usage</span>
+                    <span class="compact-value">{{ data.last_24hr_usage|floatformat:2 }} L</span>
+                </div>
+            </div>
+
+            <button class="btn-more" id="btn-{{ data.customer.id }}" onclick="toggleDetails('{{ data.customer.id }}')">📋 More Details</button>
+
+            <!-- Detailed View (Hidden by default) -->
+            <div class="detail-section" id="details-{{ data.customer.id }}">
+                <div class="detail-boxes">
+                    <!-- Customer Details Box -->
+                    <div class="detail-box">
+                        <h3>👤 Customer Information</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Full Name:</span>
+                            <span class="detail-value">{{ data.customer.name }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Email:</span>
+                            <span class="detail-value">{{ data.customer.email }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Phone Number:</span>
+                            <span class="detail-value">{{ data.customer.phone_number }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Location:</span>
+                            <span class="detail-value">{{ data.customer.location|default:"N/A" }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Latitude:</span>
+                            <span class="detail-value">{{ data.customer.latitude|default:"N/A" }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Longitude:</span>
+                            <span class="detail-value">{{ data.customer.longitude|default:"N/A" }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Registration Date:</span>
+                            <span class="detail-value">{{ data.customer.registration_date|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Account Status:</span>
+                            <span class="detail-value">
+                                <span class="status-badge {% if data.customer.block_unblock %}status-active{% else %}status-blocked{% endif %}">
+                                    {% if data.customer.block_unblock %}🟢 Active{% else %}🔴 Blocked{% endif %}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Device Details Box -->
+                    <div class="detail-box">
+                        <h3>📡 Device Information</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Device Chip ID:</span>
+                            <span class="detail-value" style="font-family: monospace; font-size: 12px;">{{ data.customer.device_chip_id }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Device Status:</span>
+                            <span class="detail-value">
+                                <span class="device-status {% if data.customer.device_status == 'online' %}device-online{% else %}device-offline{% endif %}">
+                                    {{ data.customer.device_status|upper }}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">System Status:</span>
+                            <span class="detail-value">{{ data.customer.system_status|default:"N/A" }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Last 24hr Usage:</span>
+                            <span class="detail-value">{{ data.last_24hr_usage|floatformat:2 }} Liters</span>
+                        </div>
+                        {% if data.last_recharge %}
+                        <div class="detail-row">
+                            <span class="detail-label">Last Recharge Date:</span>
+                            <span class="detail-value">{{ data.last_recharge.recharge_date|date:"M d, Y H:i" }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Recharge Amount:</span>
+                            <span class="detail-value">{{ data.last_recharge.litres_allocated }} Liters</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Recharge Status:</span>
+                            <span class="detail-value">{{ data.last_recharge.status|upper }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Days Remaining:</span>
+                            <span class="detail-value">{{ data.last_recharge.days_until_expiry }} days</span>
+                        </div>
+                        {% else %}
+                        <div class="detail-row">
+                            <span class="detail-label">Recharge Info:</span>
+                            <span class="detail-value" style="color: #ef4444;">No recharge found</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- View Full Details Button -->
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="{% url 'aquaguard:customer-details' data.customer.id %}" class="btn btn-primary">
+                        View Complete Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% elif query %}
+        <div class="no-results">
+            <div class="no-results-icon"></div>
+            <h3>No customers found</h3>
+            <p>Try searching with different keywords or search type.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

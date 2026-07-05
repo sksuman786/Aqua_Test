@@ -1,0 +1,467 @@
+{% extends 'aquaguard/base.html' %}
+{% load static %}
+
+{% block title %}Coupons Management - AquaGuard Admin{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="page-header">
+        <h1 class="page-title">Coupon Management</h1>
+        <a href="{% url 'aquaguard:admin-create-coupon' %}" class="btn-primary">+ Add New Coupon</a>
+    </div>
+    
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <form method="GET" class="filters-form">
+            <div class="filter-group">
+                <input 
+                    type="text" 
+                    name="search" 
+                    placeholder="Search by coupon code..."
+                    value="{{ current_search }}"
+                    class="filter-input"
+                />
+            </div>
+            
+            <div class="filter-group">
+                <select name="status" class="filter-select">
+                    <option value="">All Status</option>
+                    {% for status_value, status_label in status_choices %}
+                        <option value="{{ status_value }}" {% if current_status == status_value %}selected{% endif %}>
+                            {{ status_label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <select name="type" class="filter-select">
+                    <option value="">All Types</option>
+                    {% for type_value, type_label in type_choices %}
+                        <option value="{{ type_value }}" {% if current_type == type_value %}selected{% endif %}>
+                            {{ type_label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <button type="submit" class="btn-filter">Filter</button>
+        </form>
+    </div>
+    
+    <!-- Coupons Table -->
+    <div class="table-responsive">
+        <table class="data-table coupons-table">
+            <thead>
+                <tr>
+                    <th data-label="Code">Coupon Code</th>
+                    <th data-label="Type">Type</th>
+                    <th data-label="Value">Discount Value</th>
+                    <th data-label="Valid From">Valid From</th>
+                    <th data-label="Valid Until">Valid Until</th>
+                    <th data-label="Usage">Usage</th>
+                    <th data-label="Status">Status</th>
+                    <th data-label="Actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if coupons %}
+                    {% for coupon in coupons %}
+                        <tr>
+                            <td data-label="Code">
+                                <strong>{{ coupon.coupon_code }}</strong>
+                            </td>
+                            <td data-label="Type">
+                                <span class="badge badge-info">{{ coupon.get_coupon_type_display }}</span>
+                            </td>
+                            <td data-label="Value">
+                                {% if coupon.coupon_type == 'percentage' %}
+                                    {{ coupon.discount_value }}%
+                                {% elif coupon.coupon_type == 'fixed' %}
+                                    ₹{{ coupon.discount_value }}
+                                {% else %}
+                                    {{ coupon.discount_value }} L
+                                {% endif %}
+                            </td>
+                            <td data-label="Valid From">
+                                {{ coupon.valid_from|date:"d M Y" }}
+                            </td>
+                            <td data-label="Valid Until">
+                                {{ coupon.valid_until|date:"d M Y" }}
+                            </td>
+                            <td data-label="Usage">
+                                <span class="usage-badge">
+                                    {{ coupon.current_usage }}
+                                    {% if coupon.max_usage %}
+                                        / {{ coupon.max_usage }}
+                                    {% else %}
+                                        / ∞
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td data-label="Status">
+                                <span class="status-badge status-{{ coupon.status }}">
+                                    {{ coupon.get_status_display }}
+                                </span>
+                            </td>
+                            <td data-label="Actions">
+                                <div class="action-buttons">
+                                    <a href="{% url 'aquaguard:admin-coupon-detail' coupon.id %}" 
+                                       class="btn-action btn-view" title="View Details">
+                                        View
+                                    </a>
+                                    <button class="btn-action btn-edit" onclick="editCoupon({{ coupon.id }})" 
+                                            title="Edit">
+                                        Edit
+                                    </button>
+                                    <button class="btn-action btn-delete" onclick="deleteCoupon({{ coupon.id }}, '{{ coupon.coupon_code }}')" 
+                                            title="Delete">
+                                        Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="no-data">No coupons found</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.content-wrapper {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+    padding: 30px;
+    min-height: 100vh;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    gap: 20px;
+}
+
+.page-title {
+    color: #22c55e;
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(34, 197, 94, 0.3);
+}
+
+.filters-section {
+    background: linear-gradient(135deg, #1a2f4a 0%, #16213e 100%);
+    border: 1px solid #2d3a52;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.filters-form {
+    display: flex !important;
+    gap: 15px !important;
+    flex-wrap: wrap !important;
+}
+
+.filter-group {
+    flex: 1 !important;
+    min-width: 200px !important;
+}
+
+.filter-input,
+.filter-select {
+    width: 100% !important;
+    padding: 10px 15px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 6px !important;
+    color: white !important;
+    font-size: 14px !important;
+}
+
+.filter-input::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.filter-select option {
+    background: #16213e;
+    color: white;
+}
+
+.btn-filter {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 10px 20px !important;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.2s;
+    align-self: flex-end;
+}
+
+.btn-filter:hover {
+    transform: translateY(-2px);
+}
+
+.table-responsive {
+    background: linear-gradient(135deg, #1a2f4a 0%, #16213e 100%);
+    border: 1px solid #2d3a52;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.coupons-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: white;
+}
+
+.coupons-table thead {
+    background: #1e3a5f;
+    border-bottom: 2px solid #667eea;
+}
+
+.coupons-table th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #ffffff;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: #1e3a5f;
+}
+
+.coupons-table td {
+    padding: 15px;
+    border-bottom: 1px solid rgba(45, 58, 82, 0.5);
+    font-size: 14px;
+    color: #e0e7ff;
+}
+
+.coupons-table tbody tr:hover {
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.coupons-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-info {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
+.usage-badge {
+    background: rgba(168, 85, 247, 0.2);
+    color: #d8b4fe;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    display: inline-block;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.status-active {
+    background: rgba(34, 197, 94, 0.2);
+    color: #86efac;
+}
+
+.status-inactive {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+.status-expired {
+    background: rgba(156, 163, 175, 0.2);
+    color: #d1d5db;
+}
+
+.action-buttons {
+    display: flex !important;
+    gap: 10px !important;
+}
+
+.btn-action {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: transform 0.2s, opacity 0.2s, background 0.2s;
+    padding: 8px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-view {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.btn-edit {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.btn-delete {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    opacity: 1;
+}
+
+.btn-view:hover {
+    background: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+}
+
+.btn-edit:hover {
+    background: rgba(34, 197, 94, 0.3);
+    box-shadow: 0 4px 8px rgba(34, 197, 94, 0.2);
+}
+
+.btn-delete:hover {
+    background: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
+}
+
+.no-data {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 40px 15px !important;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid #2d3a52;
+    }
+    
+    .content-area {
+        margin-left: 0;
+        padding: 20px;
+    }
+    
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .filters-form {
+        flex-direction: column !important;
+    }
+    
+    .filter-group {
+        flex: 1 !important;
+        width: 100% !important;
+    }
+    
+    .btn-filter {
+        width: 100%;
+        align-self: auto;
+    }
+    
+    .coupons-table {
+        font-size: 12px;
+    }
+    
+    .coupons-table td,
+    .coupons-table th {
+        padding: 10px;
+    }
+}
+</style>
+
+<script>
+function editCoupon(couponId) {
+    window.location.href = `{% url 'aquaguard:admin-update-coupon' 0 %}`.replace('0', couponId);
+}
+
+function deleteCoupon(couponId, couponCode) {
+    if (confirm(`Are you sure you want to delete the coupon "${couponCode}"?`)) {
+        fetch(`{% url 'aquaguard:admin-delete-coupon' 0 %}`.replace('0', couponId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

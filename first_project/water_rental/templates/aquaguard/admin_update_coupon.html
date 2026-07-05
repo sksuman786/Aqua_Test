@@ -1,0 +1,477 @@
+{% extends 'aquaguard/base.html' %}
+{% load static %}
+
+{% block title %}Edit Coupon - AquaGuard Admin{% endblock %}
+
+{% block content %}
+<style>
+    .edit-coupon-page {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        color: white;
+        padding: 40px 30px;
+        min-height: 100vh;
+        width: 100%;
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-header h1 {
+        font-size: 32px;
+        margin: 0;
+    }
+
+    .btn-secondary {
+        background: rgba(107, 114, 128, 0.2);
+        color: #d1d5db;
+        padding: 12px 24px;
+        border: 1px solid rgba(107, 114, 128, 0.5);
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-secondary:hover {
+        background: rgba(107, 114, 128, 0.3);
+    }
+
+    .form-container {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 30px;
+        max-width: 900px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .info-box {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 25px;
+        color: #86efac;
+    }
+
+    .info-box p {
+        margin: 5px 0;
+        font-size: 14px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group label {
+        color: #e0e7ff;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        color: white;
+        padding: 12px 15px;
+        font-size: 14px;
+        font-family: inherit;
+        transition: all 0.2s;
+    }
+
+    .form-input:disabled {
+        background: rgba(255, 255, 255, 0.02);
+        color: rgba(255, 255, 255, 0.5);
+        cursor: not-allowed;
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+        outline: none;
+    }
+
+    .form-select option {
+        background: #16213e;
+        color: white;
+    }
+
+    .form-textarea {
+        resize: vertical;
+    }
+
+    .form-group small {
+        color: rgba(255, 255, 255, 0.5);
+        margin-top: 6px;
+        font-size: 12px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: transform 0.2s, box-shadow 0.2s;
+        flex: 1;
+        max-width: 300px;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-cancel {
+        background: rgba(107, 114, 128, 0.2);
+        color: #d1d5db;
+        padding: 12px 24px;
+        border: 1px solid rgba(107, 114, 128, 0.5);
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        max-width: 300px;
+    }
+
+    .btn-cancel:hover {
+        background: rgba(107, 114, 128, 0.3);
+    }
+
+    .plans-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .plan-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .plan-checkbox:hover {
+        background-color: rgba(102, 126, 234, 0.2);
+        border-color: rgba(102, 126, 234, 0.5);
+    }
+
+    .plan-checkbox input[type="checkbox"] {
+        cursor: pointer;
+        width: auto;
+        margin: 0;
+        accent-color: #667eea;
+    }
+
+    .plan-checkbox span {
+        font-size: 13px;
+        color: #e0e7ff;
+    }
+
+    .form-text {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #9ca3af;
+    }
+
+    @media (max-width: 768px) {
+        .edit-coupon-page {
+            padding: 20px;
+        }
+
+        .form-container {
+            padding: 20px;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn-primary,
+        .btn-cancel {
+            max-width: 100%;
+        }
+    }
+</style>
+
+<div class="edit-coupon-page">
+    <div class="page-header">
+        <h1>Edit Coupon: {{ coupon.coupon_code }}</h1>
+        <a href="{% url 'aquaguard:admin-coupons' %}" class="btn-secondary">← Back to Coupons</a>
+    </div>
+    
+    <div class="form-container">
+        <div class="info-box">
+            <p><strong>Created:</strong> {{ coupon.created_at|date:"d M Y, H:i" }}</p>
+            <p><strong>Current Usage:</strong> {{ coupon.current_usage }} {% if coupon.max_usage %}/ {{ coupon.max_usage }}{% else %}/ Unlimited{% endif %}</p>
+        </div>
+
+        <form id="couponForm" class="coupon-form">
+            {% csrf_token %}
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Coupon Code (Read-only)</label>
+                    <input type="text" value="{{ coupon.coupon_code }}" class="form-input" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label for="couponType">Coupon Type</label>
+                    <select id="couponType" name="coupon_type" class="form-select" onchange="updateValueLabel()">
+                        {% for value, label in type_choices %}
+                            <option value="{{ value }}" {% if coupon.coupon_type == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="discountValue">Discount Value</label>
+                    <input type="number" id="discountValue" name="discount_value" 
+                           value="{{ coupon.discount_value }}" 
+                           class="form-input"
+                           step="0.01" min="0">
+                    <small id="valueHint"></small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="minOrderAmount">Minimum Order Amount (₹)</label>
+                    <input type="number" id="minOrderAmount" name="min_order_amount" 
+                           value="{{ coupon.min_order_amount }}" 
+                           class="form-input"
+                           step="0.01" min="0">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="validFrom">Valid From</label>
+                    <input type="datetime-local" id="validFrom" name="valid_from" 
+                           value="{{ coupon.valid_from|date:'Y-m-dTH:i' }}"
+                           class="form-input">
+                </div>
+                
+                <div class="form-group">
+                    <label for="validUntil">Valid Until</label>
+                    <input type="datetime-local" id="validUntil" name="valid_until" 
+                           value="{{ coupon.valid_until|date:'Y-m-dTH:i' }}"
+                           class="form-input">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="maxUsage">Maximum Usage (Leave empty for unlimited)</label>
+                    <input type="number" id="maxUsage" name="max_usage" 
+                           value="{% if coupon.max_usage %}{{ coupon.max_usage }}{% endif %}" 
+                           class="form-input"
+                           min="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="maxUsagePerCustomer">Max Usage Per Customer</label>
+                    <input type="number" id="maxUsagePerCustomer" name="max_usage_per_customer" 
+                           value="{{ coupon.max_usage_per_customer }}" 
+                           class="form-input"
+                           min="1">
+                </div>
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label for="apply_to">Apply To</label>
+                <select id="apply_to" name="apply_to" class="form-select" onchange="togglePlanSelection()">
+                    <option value="all_plans" {% if not coupon.applicable_plans.exists %}selected{% endif %}>All Plans</option>
+                    <option value="specific_plans" {% if coupon.applicable_plans.exists %}selected{% endif %}>Specific Plans</option>
+                </select>
+                <small class="form-text">Choose whether this coupon applies to all plans or specific ones</small>
+            </div>
+
+            <div class="form-group" id="plans_selection" style="grid-column: 1 / -1; {% if not coupon.applicable_plans.exists %}display: none;{% endif %}">
+                <label for="applicable_plans">Select Plans</label>
+                <div class="plans-grid">
+                    {% for plan in plans %}
+                    <label class="plan-checkbox">
+                        <input type="checkbox" name="applicable_plans" value="{{ plan.id }}" 
+                               {% if plan.id in coupon_plan_ids %}checked{% endif %}>
+                        <span>{{ plan.plan_name }} - ₹{{ plan.price }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                <small class="form-text">Select one or more plans for this coupon</small>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status" name="status" class="form-select">
+                        {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if coupon.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" 
+                          class="form-textarea" rows="4">{{ coupon.description }}</textarea>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Update Coupon</button>
+                <a href="{% url 'aquaguard:admin-coupon-detail' coupon.id %}" class="btn-cancel">View Details</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function togglePlanSelection() {
+    const applyTo = document.getElementById('apply_to').value;
+    const plansSelection = document.getElementById('plans_selection');
+    const checkboxes = plansSelection.querySelectorAll('input[type="checkbox"]');
+    
+    if (applyTo === 'specific_plans') {
+        plansSelection.style.display = 'block';
+    } else {
+        plansSelection.style.display = 'none';
+        // Uncheck all when switching to all_plans
+        checkboxes.forEach(cb => cb.checked = false);
+    }
+}
+
+document.getElementById('couponForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const applyTo = document.getElementById('apply_to').value;
+    const planCheckboxes = Array.from(document.querySelectorAll('input[name="applicable_plans"]:checked'));
+    
+    // Validation
+    if (applyTo === 'specific_plans' && planCheckboxes.length === 0) {
+        alert('Please select at least one plan');
+        return;
+    }
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    // Handle multiple checkbox values
+    const planIds = Array.from(formData.getAll('applicable_plans'));
+    if (planIds.length > 0) {
+        data.applicable_plans = planIds;
+    }
+    data.apply_to = applyTo;
+    
+    try {
+        const couponId = {{ coupon.id }};
+        const response = await fetch(`/admin/coupons/${couponId}/update/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            window.location.href = `/admin/coupons/${couponId}/`;
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while updating the coupon');
+    }
+});
+
+function updateValueLabel() {
+    const type = document.getElementById('couponType').value;
+    const hint = document.getElementById('valueHint');
+    
+    if (type === 'percentage') {
+        hint.textContent = 'Enter discount percentage (e.g., 20 for 20%)';
+    } else if (type === 'fixed') {
+        hint.textContent = 'Enter discount amount in ₹ (e.g., 50 for ₹50)';
+    } else if (type === 'free_litres') {
+        hint.textContent = 'Enter free litres to give (e.g., 100 for 100L)';
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Initialize on load
+window.addEventListener('DOMContentLoaded', function() {
+    updateValueLabel();
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,425 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}Subscription Plans - Admin{% endblock %}
+
+{% block content %}
+<style>
+    .admin-container {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        color: white;
+        padding: 40px 30px;
+        min-height: 100vh;
+        margin-left: 0;
+        width: 100%;
+        border-radius: 0;
+    }
+
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .content-header h1 {
+        font-size: 32px;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
+    }
+
+    .filter-section {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .filter-row {
+        display: flex;
+        gap: 15px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filter-group label {
+        font-size: 14px;
+        margin-bottom: 8px;
+        color: #e2e8f0;
+    }
+
+    .filter-group select,
+    .filter-group input {
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(30, 41, 59, 0.8);
+        color: white;
+        font-size: 14px;
+        min-width: 150px;
+    }
+
+    .filter-group select:focus,
+    .filter-group input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+    }
+
+    .plans-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+
+    .plan-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 25px;
+        transition: all 0.3s ease;
+    }
+
+    .plan-card:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: #667eea;
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+    }
+
+    .plan-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 15px;
+        gap: 10px;
+    }
+
+    .plan-name {
+        font-size: 20px;
+        font-weight: 700;
+        color: #0ea5e9;
+        margin: 0;
+    }
+
+    .plan-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid #22c55e;
+    }
+
+    .plan-badge.inactive {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border-color: #ef4444;
+    }
+
+    .plan-badge.popular {
+        background: rgba(249, 115, 22, 0.2);
+        color: #f97316;
+        border-color: #f97316;
+    }
+
+    .plan-details {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+    }
+
+    .detail-label {
+        color: #cbd5e1;
+    }
+
+    .detail-value {
+        color: white;
+        font-weight: 600;
+    }
+
+    .plan-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-small {
+        flex: 1;
+        padding: 10px 15px;
+        border-radius: 6px;
+        border: none;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        min-height: 36px;
+    }
+
+    .btn-view {
+        background: rgba(14, 165, 233, 0.2);
+        color: #0ea5e9;
+        border: 1px solid #0ea5e9;
+    }
+
+    .btn-view:hover {
+        background: #0ea5e9;
+        color: white;
+    }
+
+    .btn-edit {
+        background: rgba(249, 115, 22, 0.2);
+        color: #f97316;
+        border: 1px solid #f97316;
+    }
+
+    .btn-edit:hover {
+        background: #f97316;
+        color: white;
+    }
+
+    .btn-delete {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid #ef4444;
+    }
+
+    .btn-delete:hover {
+        background: #ef4444;
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #cbd5e1;
+    }
+
+    .empty-state h2 {
+        color: #e2e8f0;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+
+    .stats-bar {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 24px;
+        font-weight: 700;
+        color: #0ea5e9;
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: #cbd5e1;
+        margin-top: 5px;
+    }
+
+    @media (max-width: 768px) {
+        .plans-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-row {
+            flex-direction: column;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+        }
+
+        .plan-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="admin-container">
+    <div class="content-header">
+        <div>
+            <h1>📋 Subscription Plans</h1>
+            <p style="margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px;">Manage all subscription plans and pricing</p>
+        </div>
+        <div class="action-buttons">
+            <a href="{% url 'aquaguard:create-subscription-plan' %}" class="btn-primary">➕ Create Plan</a>
+            <a href="{% url 'aquaguard:admin-dashboard' %}" class="btn-primary" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);">← Back</a>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-number">{{ plans|length }}</div>
+            <div class="stat-label">Total Plans</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">{{ plans|dictsort:"status"|length }}</div>
+            <div class="stat-label">Active Plans</div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <form method="GET" class="filter-row">
+            <div class="filter-group">
+                <label for="status">Status:</label>
+                <select name="status" id="status">
+                    <option value="">All Status</option>
+                    {% for choice in status_choices %}
+                        <option value="{{ choice.0 }}" {% if choice.0 == current_status %}selected{% endif %}>
+                            {{ choice.1 }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group" style="flex: 1;">
+                <label for="search">Search Plan:</label>
+                <input type="text" name="search" id="search" placeholder="Search by plan name..." value="{{ current_search }}">
+            </div>
+            <button type="submit" class="btn-primary" style="margin: 0;">🔍 Filter</button>
+            {% if current_status or current_search %}
+                <a href="?" class="btn-primary" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); color: #ef4444;">✕ Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Plans Grid -->
+    {% if plans %}
+        <div class="plans-grid">
+            {% for plan in plans %}
+                <div class="plan-card">
+                    <div class="plan-header">
+                        <h3 class="plan-name">{{ plan.plan_name }}</h3>
+                        <div>
+                            {% if plan.is_popular %}
+                                <span class="plan-badge popular">⭐ Popular</span>
+                            {% endif %}
+                            <span class="plan-badge {% if plan.status %}{% else %}inactive{% endif %}">
+                                {% if plan.status %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="plan-details">
+                        <div class="detail-item">
+                            <span class="detail-label">💰 Price</span>
+                            <span class="detail-value">₹{{ plan.price }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">💧 Litres Allocated</span>
+                            <span class="detail-value">{{ plan.litres_allocated }}L</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">📅 Duration</span>
+                            <span class="detail-value">{{ plan.duration_days }} days</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">📊 Per Litre Rate</span>
+                            <span class="detail-value">{{ plan.paisa_per_litre }} paisa</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">👥 Users</span>
+                            <span class="detail-value">{{ plan.customers.count }} customers</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">📝 Created</span>
+                            <span class="detail-value">{{ plan.created_at|date:"M d, Y" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="plan-actions">
+                        <a href="{% url 'aquaguard:subscription-plan-detail' plan.id %}" class="btn-small btn-view">👁️ View</a>
+                        <a href="{% url 'aquaguard:update-subscription-plan' plan.id %}" class="btn-small btn-edit">✏️ Edit</a>
+                        <form method="POST" action="{% url 'aquaguard:delete-subscription-plan' plan.id %}" style="display: inline; flex: 1;" onsubmit="return confirmDelete('{{ plan.plan_name }}', {{ plan.customers.count }})">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-small btn-delete" class="delete-btn-{{ plan.id }}">🗑️ Delete</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <h2>📭 No Subscription Plans Found</h2>
+            <p>{% if current_status or current_search %}No plans match your filters. Try adjusting your search criteria.{% else %}Create your first subscription plan to get started.{% endif %}</p>
+            <a href="{% url 'aquaguard:create-subscription-plan' %}" class="btn-primary">➕ Create First Plan</a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function confirmDelete(planName, customerCount) {
+    if (customerCount > 0) {
+        alert(`Cannot delete plan "${planName}" because ${customerCount} customer(s) are currently using it. Please reassign these customers to another plan first.`);
+        return false;
+    }
+
+    return confirm(`Are you sure you want to delete the subscription plan "${planName}"?\n\nThis action cannot be undone.`);
+}
+</script>
+
+{% endblock %}

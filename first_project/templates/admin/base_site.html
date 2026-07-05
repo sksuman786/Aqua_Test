@@ -1,0 +1,10 @@
+{% extends "admin/base.html" %}
+
+{% load i18n %}
+
+{% block userlinks %}
+    {{ block.super }}
+    {% if request.user.is_staff %}
+        | <a href="{% url 'admin:water_rental_customer_changelist' %}?action=schedule_ota_update">{% trans "Schedule OTA" %}</a>
+    {% endif %}
+{% endblock %}

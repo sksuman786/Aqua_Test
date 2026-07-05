@@ -1,0 +1,335 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}Technician Management - AquaGuard{% endblock %}
+
+{% block content %}
+<style>
+    .technician-container {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        color: white;
+        padding: 0px 30px 40px 30px;
+        min-height: 100vh;
+        
+    }
+
+    .header-with-button {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .header-with-button h1 {
+        font-size: 28px;
+        margin: 0;
+        color: white;
+    }
+
+    .add-btn {
+        background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+    }
+
+    .add-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+    }
+
+    .filter-section {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        margin-bottom: 30px;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .filter-section select {
+        background: rgba(30, 41, 59, 0.5);
+        color: white;
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+    }
+
+    .filter-section button {
+        background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .technician-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .technician-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .technician-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(14, 165, 233, 0.5);
+        box-shadow: 0 8px 20px rgba(14, 165, 233, 0.2);
+    }
+
+    .technician-name {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: white;
+    }
+
+    .technician-specialization {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        display: inline-block;
+        margin-bottom: 12px;
+    }
+
+    .technician-info {
+        font-size: 13px;
+        color: #cbd5e1;
+        margin: 8px 0;
+        line-height: 1.6;
+    }
+
+    .technician-status {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-top: 10px;
+    }
+
+    .status-available {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+    }
+
+    .status-busy {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fbbf24;
+    }
+
+    .status-on_leave {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+    }
+
+    .technician-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid rgba(14, 165, 233, 0.2);
+    }
+
+    .tech-btn {
+        flex: 1;
+        padding: 6px 10px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+        transition: all 0.3s;
+    }
+
+    .btn-view {
+        background: rgba(14, 165, 233, 0.2);
+        color: #0ea5e9;
+        border: 1px solid rgba(14, 165, 233, 0.3);
+    }
+
+    .btn-view:hover {
+        background: rgba(14, 165, 233, 0.3);
+    }
+
+    .btn-edit {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .btn-edit:hover {
+        background: rgba(34, 197, 94, 0.3);
+    }
+
+    .btn-delete {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-delete:hover {
+        background: rgba(239, 68, 68, 0.3);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #cbd5e1;
+    }
+
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: rgba(14, 165, 233, 0.1);
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 24px;
+        font-weight: 700;
+        color: #0ea5e9;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #94a3b8;
+        text-transform: uppercase;
+        margin-top: 5px;
+    }
+</style>
+
+<div class="technician-container">
+    <div class="header-with-button">
+        <h1>👨‍🔧 Technician Management</h1>
+        <a href="{% url 'aquaguard:add-technician' %}" class="add-btn">+ Add Technician</a>
+    </div>
+
+    <!-- Statistics -->
+    {% if technicians %}
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-number">{{ technicians|length }}</div>
+            <div class="stat-label">Total Technicians</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ technicians|length|add:"-1" }}</div>
+            <div class="stat-label">Active</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <label style="font-size: 13px; text-transform: uppercase;">Filter by Status:</label>
+        <form method="GET" style="display: flex; gap: 10px; align-items: center;">
+            <select name="status">
+                <option value="">All Statuses</option>
+                <option value="available" {% if active_status == 'available' %}selected{% endif %}>Available</option>
+                <option value="busy" {% if active_status == 'busy' %}selected{% endif %}>Busy</option>
+                <option value="on_leave" {% if active_status == 'on_leave' %}selected{% endif %}>On Leave</option>
+            </select>
+            <button type="submit">Filter</button>
+            {% if active_status %}
+            <a href="{% url 'aquaguard:technician-list' %}" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; padding: 8px 16px; border-radius: 6px; text-decoration: none; cursor: pointer; border: none; font-weight: 600;">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Technician Grid -->
+    {% if technicians %}
+    <div class="technician-grid">
+        {% for tech in technicians %}
+        <div class="technician-card">
+            <div class="technician-name">{{ tech.name }}</div>
+            {% if tech.specialization %}
+            <div class="technician-specialization">{{ tech.specialization }}</div>
+            {% endif %}
+            
+            <div class="technician-info">
+                <strong style="color: #0ea5e9;">📧 Email:</strong><br>
+                {{ tech.email }}
+            </div>
+            <div class="technician-info">
+                <strong style="color: #0ea5e9;">📱 Phone:</strong><br>
+                {{ tech.phone_number }}
+            </div>
+            {% if tech.area_of_operation %}
+            <div class="technician-info">
+                <strong style="color: #0ea5e9;">📍 Area:</strong><br>
+                {{ tech.area_of_operation }}
+            </div>
+            {% endif %}
+
+            <div class="technician-info">
+                <strong style="color: #0ea5e9;">⭐ Rating:</strong><br>
+                {{ tech.rating|floatformat:1 }}/5.0
+            </div>
+
+            <div class="technician-info">
+                <strong style="color: #0ea5e9;">✅ Completed:</strong> {{ tech.completed_jobs }}
+            </div>
+
+            <span class="technician-status status-{{ tech.status }}">
+                {% if tech.status == 'available' %}🟢 Available
+                {% elif tech.status == 'busy' %}🟡 Busy
+                {% else %}🔴 On Leave
+                {% endif %}
+            </span>
+
+            <div class="technician-actions">
+                <a href="{% url 'aquaguard:technician-detail' tech.id %}" class="tech-btn btn-view">View</a>
+                <a href="{% url 'aquaguard:edit-technician' tech.id %}" class="tech-btn btn-edit">Edit</a>
+                <a href="{% url 'aquaguard:delete-technician' tech.id %}" class="tech-btn btn-delete" onclick="return confirm('Are you sure?');">Delete</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">👨‍🔧</div>
+        <p>No technicians found. <a href="{% url 'aquaguard:add-technician' %}" style="color: #0ea5e9; text-decoration: underline;">Add one now!</a></p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

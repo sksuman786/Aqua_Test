@@ -1,0 +1,326 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}Create Complaint - AquaGuard Admin{% endblock %}
+
+{% block content %}
+<style>
+    .create-complaint-page {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        color: white;
+        padding: 40px 30px;
+        min-height: 100vh;
+        width: 100%;
+    }
+
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 30px;
+    }
+
+    .form-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .form-header h1 {
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+
+    .form-header p {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #0ea5e9;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #0ea5e9;
+        background: rgba(14, 165, 233, 0.1);
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        padding: 14px 32px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        transition: all 0.3s;
+        width: 100%;
+        margin-top: 20px;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-cancel {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 14px 32px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+        transition: all 0.3s;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .btn-cancel:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .customer-search {
+        position: relative;
+    }
+
+    .customer-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+    }
+
+    .customer-item {
+        padding: 10px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        transition: background 0.2s;
+    }
+
+    .customer-item:hover {
+        background: rgba(14, 165, 233, 0.2);
+    }
+
+    .customer-item:last-child {
+        border-bottom: none;
+    }
+
+    .error-message {
+        color: #ef4444;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    @media screen and (max-width: 768px) {
+        .create-complaint-page {
+            padding: 20px 15px;
+        }
+
+        .form-container {
+            padding: 20px;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+    }
+</style>
+
+<div class="create-complaint-page">
+    <div class="form-container">
+        <div class="form-header">
+            <h1>📝 Create New Complaint</h1>
+            <p>Manually create a support ticket for a customer</p>
+        </div>
+
+        <form method="post" id="createComplaintForm">
+            {% csrf_token %}
+
+            <div class="form-row">
+                <div class="form-group customer-search">
+                    <label for="customer_search">Customer *</label>
+                    <input type="text" id="customer_search" placeholder="Search customer by name, email, or phone..." autocomplete="off">
+                    <input type="hidden" name="customer" id="customer_id" required>
+                    <div class="customer-list" id="customerList"></div>
+                    <div class="error-message" id="customerError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="priority">Priority</label>
+                    <select name="priority" id="priority">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="phone_no">Phone Number *</label>
+                    <input type="tel" name="phone_no" id="phone_no" placeholder="Customer's phone number" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="device_id">Device ID</label>
+                    <input type="text" name="device_id" id="device_id" placeholder="ESP32 device chip ID (optional)">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="problem_statement">Problem Description *</label>
+                <textarea name="problem_statement" id="problem_statement" placeholder="Describe the customer's issue in detail..." required></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="status">Initial Status</label>
+                    <select name="status" id="status">
+                        <option value="open" selected>Open</option>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="assigned_person">Assign to Technician (Optional)</label>
+                    <select name="assigned_person" id="assigned_person">
+                        <option value="">Unassigned</option>
+                        {% for technician in technicians %}
+                            <option value="{{ technician.id }}">
+                                {{ technician.name }}
+                                {% if technician.phone_number %} (📞 {{ technician.phone_number }}){% endif %}
+                                {% if technician.specialization %} - {{ technician.specialization }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">🎫 Create Complaint</button>
+            <a href="{% url 'aquaguard:admin-complaints-list' %}" class="btn-cancel">Cancel</a>
+        </form>
+    </div>
+</div>
+
+<script>
+// Customer search functionality
+document.getElementById('customer_search').addEventListener('input', function() {
+    const query = this.value.trim();
+    const customerList = document.getElementById('customerList');
+
+    if (query.length < 2) {
+        customerList.style.display = 'none';
+        return;
+    }
+
+    // Fetch customers
+    fetch(`/api/admin/search-customers/?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            customerList.innerHTML = '';
+
+            if (data.customers && data.customers.length > 0) {
+                data.customers.forEach(customer => {
+                    const item = document.createElement('div');
+                    item.className = 'customer-item';
+                    item.textContent = `${customer.name} (${customer.email}) - ${customer.phone_number}`;
+                    item.onclick = function() {
+                        document.getElementById('customer_search').value = `${customer.name} (${customer.email})`;
+                        document.getElementById('customer_id').value = customer.id;
+                        document.getElementById('phone_no').value = customer.phone_number;
+                        document.getElementById('device_id').value = customer.device_chip_id || '';
+                        customerList.style.display = 'none';
+                        document.getElementById('customerError').textContent = '';
+                    };
+                    customerList.appendChild(item);
+                });
+                customerList.style.display = 'block';
+            } else {
+                customerList.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error searching customers:', error);
+            customerList.style.display = 'none';
+        });
+});
+
+// Hide customer list when clicking outside
+document.addEventListener('click', function(e) {
+    const customerSearch = document.querySelector('.customer-search');
+    const customerList = document.getElementById('customerList');
+
+    if (!customerSearch.contains(e.target)) {
+        customerList.style.display = 'none';
+    }
+});
+
+// Form validation
+document.getElementById('createComplaintForm').addEventListener('submit', function(e) {
+    const customerId = document.getElementById('customer_id').value;
+    const customerError = document.getElementById('customerError');
+
+    if (!customerId) {
+        e.preventDefault();
+        customerError.textContent = 'Please select a valid customer from the search results.';
+        return false;
+    }
+
+    customerError.textContent = '';
+});
+</script>
+
+{% endblock %}

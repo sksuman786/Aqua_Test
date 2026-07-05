@@ -1,0 +1,897 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}{{ customer.name }} - Customer Details{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<style>
+    .customer-detail-page {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        color: white;
+        padding: 40px 30px;
+        min-height: 100vh;
+        margin-left: 0;
+        width: 100%;
+        border-radius: 0;
+    }
+
+    .container {
+        max-width: 100%;
+        margin: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .header-section {
+        display: grid;
+        /* grid-template-columns: 0.55fr auto; */
+        gap: 30px;
+        margin-bottom: 40px;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        padding: 30px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .customer-info h1 {
+        font-size: 32px;
+        margin-bottom: 15px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .info-item {
+        background: rgba(14, 165, 233, 0.1);
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid rgba(14, 165, 233, 0.2);
+    }
+
+    .info-item label {
+        font-size: 12px;
+        color: #0ea5e9;
+        text-transform: uppercase;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .info-item value {
+        font-size: 14px;
+        display: block;
+    }
+
+    .device-status-box {
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+    }
+
+    .device-status-box.online {
+        background: rgba(34, 197, 94, 0.2);
+        border: 2px solid #22c55e;
+    }
+
+    .device-status-box.offline {
+        background: rgba(239, 68, 68, 0.2);
+        border: 2px solid #ef4444;
+    }
+
+    .device-status-box .status {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .section-title {
+        font-size: 22px;
+        font-weight: 700;
+        margin-top: 40px;
+        margin-bottom: 20px;
+        color: white;
+    }
+    
+    .data-table {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .data-table thead {
+        background: rgba(14, 165, 233, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .data-table th {
+        padding: 14px 16px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 12px;
+        color: #0ea5e9;
+        text-transform: uppercase;
+    }
+
+    .data-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 14px;
+    }
+
+    .data-table tbody tr:hover {
+        background: rgba(30, 41, 59, 0.8);
+    }
+
+    .recharge-alert {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        color: #fca5a5;
+    }
+
+    .recharge-warning {
+        background: rgba(250, 204, 21, 0.1);
+        border: 1px solid rgba(250, 204, 21, 0.3);
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        color: #fef08a;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        opacity: 0.6;
+    }
+
+    .back-link {
+        color: #0ea5e9;
+        text-decoration: none;
+        margin-bottom: 20px;
+        display: inline-block;
+        font-weight: 600;
+        transition: color 0.3s;
+    }
+
+    .back-link:hover {
+        color: #06b6d4;
+    }
+
+    .btn-action {
+        border: none;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: auto;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .btn-active {
+        background: #ef4444;
+    }
+
+    .btn-active:hover {
+        background: #dc2626;
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-1px);
+    }
+
+    .btn-inactive {
+        background: #22c55e;
+    }
+
+    .btn-inactive:hover {
+        background: #16a34a;
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-1px);
+    }
+</style>
+
+<div class="customer-detail-page">
+    <div class="container">
+        <a href="{% url 'aquaguard:admin-dashboard' %}" class="back-link">← Back to Dashboard</a>
+
+        <!-- Customer Header -->
+        <div class="header-section">
+            <div class="customer-info">
+                <h1>{{ customer.name }}</h1>
+                <div class="info-grid">
+                    <!-- ...existing info items... -->
+                </div>
+            </div>
+            <div style="align-self: flex-start; display: flex; flex-direction: column; align-items: flex-end;">
+                <button onclick="openEditCustomerModal()" title="Edit Customer Details" style="background: #0ea5e9; color: white; border: none; padding: 10px 22px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px rgba(14,165,233,0.15);">Edit</button>
+            </div>
+                    {% include 'aquaguard/customer_edit_modal.html' %}
+                    <div class="info-item">
+                        <label>Email</label>
+                        <value>{{ customer.email }}</value>
+                    </div>
+                    <div class="info-item">
+                        <label>Phone</label>
+                        <value>{{ customer.phone_number }}</value>
+                    </div>
+                    <div class="info-item">
+                        <label>Token</label>
+                        <value>{% if customer.device_token %}{{ customer.device_token }}{% else %}Not assigned{% endif %}</value>
+                    </div>
+                    <div class="info-item">
+                        <label>Device Chip ID</label>
+                        <value style="font-family: monospace; font-size: 12px; display: flex; align-items: center; gap: 10px;">
+                            <span id="chip-id-display">{{ customer.device_chip_id }}</span>
+                        </value>
+                    </div>
+                    <div class="info-item">
+                        <label>Firmware Version</label>
+                        <value>{% if customer.ota_version %}{{ customer.ota_version }}{% else %}Unknown{% endif %}</value>
+                    </div>
+                    <div class="info-item">
+                        <label>Last Seen</label>
+                        <value>{% if customer.device_status == 'online' %}Now (Online){% elif customer.last_recharge_date %}{{ customer.last_recharge_date|timesince }} ago{% else %}Never{% endif %}</value>
+                    </div>
+                    <div class="info-item">
+                        <label>Family Members</label>
+                        <value>{{ customer.number_of_family_members }}</value>
+                    </div>
+                    <div class="info-item">
+                        <label>Location</label>
+                        <value>{{ customer.location|default:"Not specified" }}</value>
+                    </div>
+                    <div class="info-item">
+                        <label>Coordinates (Lat, Long)</label>
+                        <value style="font-size: 12px;">{% if customer.latitude and customer.longitude %}{{ customer.latitude|floatformat:6 }}, {{ customer.longitude|floatformat:6 }}{% else %}Not available{% endif %}</value>
+                    </div>
+                    <div class="info-item">
+                        <label>Customer Address</label>
+                        <value>{{ customer.customer_address|default:"Not provided" }}</value>
+                    </div>
+                    <div class="info-item">
+                        <label>Price Per Liter (Rs)</label>
+                        <value>{{ customer.paisa_per_litre|default:"0"|floatformat:2 }}</value>
+                    </div>
+                    <div class="info-item">
+                        <label>Registration Date</label>
+                        <value>{{ customer.registration_date|date:"M d, Y" }}</value>
+                    </div>
+                    
+            
+            <div class="device-status-box {% if customer.device_status == 'online' %}online{% else %}offline{% endif %}">
+                <div class="status">{{ customer.device_status|upper }}</div>
+                <div>{% if customer.device_status == 'online' %}Connected{% else %}Disconnected{% endif %}</div>
+            </div>
+            <div class="device-status-box {% if customer.device_health == 'Healthy' %}online{% elif customer.device_health == 'Warning' %}warning{% else %}offline{% endif %}" style="grid-column: auto; margin-top: 10px;">
+                <div class="status" style="color: {% if customer.device_health == 'Healthy' %}#22c55e{% elif customer.device_health == 'Warning' %}#fbbf24{% elif customer.device_health == 'Critical' %}#ef4444{% else %}#888{% endif %};">
+                    {% if customer.device_health %}{{ customer.device_health|upper }}{% else %}N/A{% endif %}
+                </div>
+                <div style="font-size: 12px;">Device Health</div>
+            </div>
+            <div class="device-status-box {% if customer.block_unblock %}online{% else %}offline{% endif %}" 
+     style="grid-column: auto; margin-top: 10px;">
+    
+    <div class="status" id="block-status-text">
+        {% if customer.block_unblock %}ACTIVE{% else %}BLOCKED{% endif %}
+    </div>
+    
+    <div style="font-size: 12px; margin-bottom: 12px;">
+        System is {% if customer.block_unblock %}Active{% else %}Blocked{% endif %}
+    </div>
+
+    <button onclick="toggleBlockUnblock('{{ customer.id }}', this)" 
+            data-toggle-url="{% url 'aquaguard:toggle-block' customer.id %}"
+            class="btn-action"
+            style="width: 100%; color: white; transition: all 0.3s;
+                   background: {% if customer.block_unblock %}#ef4444{% else %}#22c55e{% endif %};"
+            title="{% if customer.block_unblock %}Click to disable the system{% else %}Click to enable the system{% endif %}">
+        
+        {% if customer.block_unblock %}Turn OFF System{% else %}Turn ON System{% endif %}
+    </button>
+</div>
+
+        <!-- Sensor Data Section -->
+        <div class="section-title">Latest Sensor Data</div>
+        <div style="background: rgba(14, 165, 233, 0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(14, 165, 233, 0.2); margin-bottom: 30px;">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-around; gap: 15px;">
+                <div style="text-align: center; padding: 15px; background: rgba(0,0,0,0.1); border-radius: 8px;">
+                    <div style="font-size: 12px; color: #888; margin-bottom: 5px;">pH Level</div>
+                    <div style="font-size: 24px; font-weight: 600; color: #0ea5e9;">
+                        {% if sensor_info.ph %}{{ sensor_info.ph|floatformat:1 }}{% else %}--{% endif %}
+                    </div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: rgba(0,0,0,0.1); border-radius: 8px;">
+                    <div style="font-size: 12px; color: #888; margin-bottom: 5px;">TDS (ppm)</div>
+                    <div style="font-size: 24px; font-weight: 600; color: #8b5cf6;">
+                        {% if sensor_info.tds %}{{ sensor_info.tds|floatformat:0 }}{% else %}--{% endif %}
+                    </div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: rgba(0,0,0,0.1); border-radius: 8px;">
+                    <div style="font-size: 12px; color: #888; margin-bottom: 5px;">Water Quality</div>
+                    <div style="font-size: 24px; font-weight: 600; color: {% if sensor_info.water_quality == 'Good' %}#22c55e{% elif sensor_info.water_quality == 'Fair' %}#fbbf24{% elif sensor_info.water_quality == 'Poor' %}#ef4444{% else %}#888{% endif %};">
+                        {% if sensor_info.water_quality %}{{ sensor_info.water_quality }}{% else %}--{% endif %}
+                    </div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: rgba(0,0,0,0.1); border-radius: 8px;">
+                    <div style="font-size: 12px; color: #888; margin-bottom: 5px;">Device Health</div>
+                    <div style="font-size: 24px; font-weight: 600; color: {% if sensor_info.device_health == 'Healthy' %}#22c55e{% elif sensor_info.device_health == 'Warning' %}#fbbf24{% elif sensor_info.device_health == 'Critical' %}#ef4444{% else %}#888{% endif %};">
+                        {% if sensor_info.device_health %}{{ sensor_info.device_health }}{% else %}--{% endif %}
+                    </div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: rgba(0,0,0,0.1); border-radius: 8px;">
+                    <div style="font-size: 12px; color: #888; margin-bottom: 5px;">Flow Rate</div>
+                    <div style="font-size: 24px; font-weight: 600; color: #f97316;">
+                        {% if sensor_info.flow_rate %}{{ sensor_info.flow_rate|floatformat:2 }} <span style="font-size: 12px;">L/min</span>{% else %}--{% endif %}
+                    </div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: rgba(0,0,0,0.1); border-radius: 8px;">
+                    <div style="font-size: 12px; color: #888; margin-bottom: 5px;">Total Flow</div>
+                    <div style="font-size: 24px; font-weight: 600; color: #22c55e;">
+                        {% if sensor_info.total_flow %}{{ sensor_info.total_flow|floatformat:1 }} <span style="font-size: 12px;">L</span>{% else %}--{% endif %}
+                    </div>
+                </div>
+            </div>
+            {% if sensor_info.timestamp %}
+            <div style="text-align: center; margin-top: 15px; font-size: 12px; color: #888;">
+                Last updated: {{ sensor_info.timestamp|date:"M d, Y H:i:s" }}
+            </div>
+            {% else %}
+            <div style="text-align: center; margin-top: 15px; font-size: 12px; color: #888;">
+                No sensor data received yet
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Recharge Status Alert -->
+        {% if customer.customer_type == 'per_litre' %}
+            {% if customer.litres_remaining <= 0 %}
+                <div class="recharge-alert">
+                    <strong>Out of Water!</strong> This customer has no litres remaining. Please recharge to continue water usage.
+                </div>
+            {% elif customer.litres_remaining <= 10 %}
+                <div class="recharge-warning">
+                    <strong>Low Water Alert:</strong> Only {{ customer.litres_remaining|floatformat:2 }}L remaining. Please recharge soon.
+                </div>
+            {% endif %}
+        {% else %}
+            {% if customer.is_out_of_date %}
+                <div class="recharge-alert">
+                     <strong>Recharge Overdue!</strong> This customer's filtration needs recharge. Last recharge was {{ customer.last_recharge_date|timesince }} ago.
+                </div>
+            {% elif customer.days_remaining <= 7 %}
+                <div class="recharge-warning">
+                     <strong>Recharge Reminder:</strong> Filtration will expire in {{ customer.days_remaining }} days. Please schedule recharge soon.
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <!-- Tracked Location -->
+        {% if tracked_location %}
+            <div class="section-title">📍 Device Location Tracking</div>
+            <div style="background: rgba(34, 197, 94, 0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.2); margin-bottom: 30px;">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-around; gap: 15px;">
+                    <div>
+                        <label style="color: #22c55e; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 5px;">Location</label>
+                        <div style="font-size: 14px; font-weight: 600;">
+                            {% if tracked_location.has_resolved_location %}
+                                {{ tracked_location.location_name }}
+                            {% elif tracked_location.location_name and tracked_location.location_name != 'Unknown location' %}
+                                {{ tracked_location.location_name }} <small style="color: #fbbf24;">(manual address)</small>
+                            {% else %}
+                                <span style="color: #fbbf24;">📍 Location tracking active - address pending</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <label style="color: #22c55e; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 5px;">Coordinates</label>
+                        <div style="font-size: 14px; font-weight: 600; font-family: monospace;">
+                            {{ tracked_location.latitude }}, {{ tracked_location.longitude }}
+                        </div>
+                    </div>
+                    <div>
+                        <label style="color: #22c55e; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 5px;">Last Updated</label>
+                        <div style="font-size: 14px; font-weight: 600;">{{ tracked_location.last_updated }}</div>
+                    </div>
+                </div>
+                <div style="margin-top: 15px;">
+                    <a href="https://www.google.com/maps?q={{ tracked_location.latitude }},{{ tracked_location.longitude }}" 
+                       target="_blank" 
+                       style="display: inline-block; background: #22c55e; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.3s;">
+                        📍 View on Google Maps
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Current Recharge Info -->
+        {% if active_recharge %}
+            <div class="section-title">Active Recharge</div>
+            <div style="background: rgba(14, 165, 233, 0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(14, 165, 233, 0.2); margin-bottom: 30px;">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-around; gap: 15px;">
+                    <div>
+                        <label style="color: #0ea5e9; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 5px;">Allocation</label>
+                        <div style="font-size: 18px; font-weight: 600;">{{ active_recharge.litres_allocated|floatformat:2 }}L</div>
+                    </div>
+                    <div>
+                        <label style="color: #0ea5e9; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 5px;">Used</label>
+                        <div style="font-size: 18px; font-weight: 600;">{{ active_recharge.litres_used|floatformat:2 }}L</div>
+                    </div>
+                    <div>
+                        <label style="color: #0ea5e9; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 5px;">Remaining</label>
+                        <div style="font-size: 18px; font-weight: 600; color: #22c55e;">{{ active_recharge.litres_remaining|floatformat:2 }}L</div>
+                    </div>
+                    <div>
+                        <label style="color: #0ea5e9; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 5px;">Expires In</label>
+                        <div style="font-size: 18px; font-weight: 600;">
+                            {% if customer.customer_type == 'per_litre' %}
+                                N/A
+                            {% else %}
+                                {{ active_recharge.days_until_expiry }} days
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <label style="color: #0ea5e9; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 5px;">Paisa/Litre</label>
+                        <div style="font-size: 18px; font-weight: 600;">
+                            {% if active_recharge_breakdown.paisa_per_litre %}
+                                {{ active_recharge_breakdown.paisa_per_litre|floatformat:2 }}
+                                <div style="font-size: 12px; color: #64748b; font-weight: 500; margin-top: 4px;">
+                                    ₹{{ active_recharge_breakdown.rupees|floatformat:2 }} for {{ active_recharge_breakdown.litres|floatformat:2 }}L → Paisa/litre
+                                </div>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if calibration_data %}
+            <div class="section-title">Calibration Data</div>
+            <div style="background: rgba(34, 197, 94, 0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.2); margin-bottom: 30px;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Calibration Factor</th>
+                            <th>Water Volume</th>
+                           
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in calibration_data %}
+                        <tr>
+                            <td>{{ record.recorded_at|date:'Y-m-d H:i' }}</td>
+                            <td>{{ record.calibration_factor|floatformat:2 }}</td>
+                            <td>{{ record.water_volume|floatformat:2 }}</td>
+                           
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="empty-state">No calibration records found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        <!-- Water Usage Data -->
+        <div class="section-title">Water Usage Data</div>
+        {% if last_usage %}
+            <div style="background: rgba(14, 165, 233, 0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(14, 165, 233, 0.2); margin-bottom: 30px; overflow-x: auto;">
+                <table style="width: 100%; font-size: 14px;">
+                    <tr style="border-bottom: 1px solid rgba(14, 165, 233, 0.2);">
+                        <td style="padding: 12px 0; color: #0ea5e9; font-weight: 600;">Last Day Usage (Past 24h)</td>
+                        <td style="padding: 12px 0; text-align: right;">{{ usage_metrics.last_day_usage|floatformat:2 }}L</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(14, 165, 233, 0.2);">
+                        <td style="padding: 12px 0; color: #0ea5e9; font-weight: 600;">Today&rsquo;s Usage</td>
+                        <td style="padding: 12px 0; text-align: right;">{{ usage_metrics.today_usage|floatformat:2 }}L</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(14, 165, 233, 0.2);">
+                        <td style="padding: 12px 0; color: #0ea5e9; font-weight: 600;">Monthly Usage (Last 30 Days)</td>
+                        <td style="padding: 12px 0; text-align: right;">{{ usage_metrics.monthly_total_usage|floatformat:2 }}L</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(14, 165, 233, 0.2);">
+                        <td style="padding: 12px 0; color: #0ea5e9; font-weight: 600;">Avg Daily Usage (Last 30 Days)</td>
+                        <td style="padding: 12px 0; text-align: right;">{{ usage_metrics.monthly_average_usage|floatformat:2 }}L/day</td>
+                    </tr>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>No usage data available yet</p>
+            </div>
+        {% endif %}
+
+        <!-- All Recharges History -->
+        <div class="section-title">Recharge History</div>
+        {% if recharges %}
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Recharge Date</th>
+                            <th>Allocated</th>
+                            <th>Used</th>
+                            <th>Remaining</th>
+                            <th>Expires</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for recharge in recharges %}
+                        <tr>
+                            <td>{{ recharge.recharge_date|date:"M d, Y H:i" }}</td>
+                            <td>{{ recharge.litres_allocated|floatformat:2 }}L</td>
+                            <td>{{ recharge.litres_used|floatformat:2 }}L</td>
+                            <td style="color: #22c55e; font-weight: 600;">{{ recharge.litres_remaining|floatformat:2 }}L</td>
+                            <td>{{ recharge.expiry_date|date:"M d, Y" }}</td>
+                            <td>
+                                <span style="display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase;
+                                    {% if recharge.is_expired %}background: rgba(239, 68, 68, 0.2); color: #fca5a5;{% else %}background: rgba(34, 197, 94, 0.2); color: #22c55e;{% endif %}">
+                                    {{ recharge.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">No recharge history</div>
+        {% endif %}
+
+        <!-- Payment History -->
+        <div class="section-title">Payment History</div>
+        {% if payments %}
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Payment Date</th>
+                            <th>Order ID</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>{{ payment.recharge_date|date:"M d, Y H:i" }}</td>
+                            <td><code style="background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; font-size: 11px;">{{ payment.order_id }}</code></td>
+                            <td style="color: #0ea5e9; font-weight: 600;">₹{{ payment.amount }}</td>
+                            <td>
+                                <span style="display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase;
+                                    {% if payment.payment_status == 'completed' %}background: rgba(34, 197, 94, 0.2); color: #22c55e;{% else %}background: rgba(239, 68, 68, 0.2); color: #fca5a5;{% endif %}">
+                                    {{ payment.payment_status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">No payment history</div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function toggleBlockUnblock(customerId, button) {
+    console.log('=== TOGGLE BUTTON CLICKED ===');
+    console.log('Customer ID:', customerId);
+    console.log('Button element:', button);
+
+    // Show loading state
+    const originalText = button.innerText;
+    const originalBackground = button.style.background;
+    button.innerText = 'Processing...';
+    button.style.background = '#f59e0b'; // Orange loading color
+    button.disabled = true;
+
+    // Get the toggle URL
+    const toggleUrl = button.getAttribute('data-toggle-url');
+    console.log('Toggle URL:', toggleUrl);
+
+    // Get CSRF token
+    const csrfToken = getCookie('csrftoken');
+    console.log('CSRF Token available:', !!csrfToken, 'Value:', csrfToken ? csrfToken.substring(0, 10) + '...' : 'null');
+
+    if (!csrfToken) {
+        console.error('CSRF token not found!');
+        button.innerText = originalText;
+        button.className = originalClass;
+        button.disabled = false;
+        showNotification('CSRF token missing. Please refresh the page.', 'error');
+        alert('CSRF token missing. Please refresh the page.');
+        return;
+    }
+
+    // Send POST request to toggle
+    console.log('Making fetch request...');
+    fetch(toggleUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({})
+    })
+    .then(async (response) => {
+        console.log('Response received. Status:', response.status);
+        console.log('Response headers:', response.headers);
+
+        const contentType = response.headers.get('content-type') || '';
+        console.log('Content-Type:', contentType);
+
+        // Check if this is a redirect (authentication failure)
+        if (response.status === 302 || response.status === 301) {
+            console.error('Redirect response - user not authenticated?');
+            const redirectUrl = response.headers.get('location');
+            console.log('Redirect URL:', redirectUrl);
+            throw new Error('Authentication required. Please refresh the page and log in again.');
+        }
+
+        if (!response.ok) {
+            const text = await response.text();
+            console.error('Response error text:', text);
+            throw new Error(text || ('Request failed: ' + response.status));
+        }
+        if (!contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Unexpected response type. Content:', text);
+            throw new Error('Unexpected response (not JSON): ' + text.slice(0, 60) + '...');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Parsed JSON response:', data);
+        if (data.success) {
+            console.log('Success! Showing notification...');
+            // Show success message
+            showNotification(data.message || 'System status updated successfully!', 'success');
+
+            // Also show browser alert as fallback
+            alert(data.message || 'System status updated successfully!');
+
+            // Update button appearance immediately for better UX
+            const isNowBlocked = data.block_unblock;
+            console.log('New block_unblock status:', isNowBlocked);
+            button.style.background = isNowBlocked ? '#ef4444' : '#22c55e';
+            button.innerText = isNowBlocked ? 'Turn OFF System' : 'Turn ON System';
+            button.title = isNowBlocked ? 'Click to turn OFF the system' : 'Click to turn ON the system';
+
+            // Update status text
+            const statusDiv = button.parentElement.querySelector('.status');
+            if (statusDiv) {
+                statusDiv.innerText = isNowBlocked ? 'ACTIVE' : 'BLOCKED';
+                console.log('Updated status text to:', statusDiv.innerText);
+            } else {
+                console.warn('Status div not found');
+            }
+
+            // Reload the page after 2 seconds to show all updated data
+            console.log('Scheduling page reload in 2 seconds...');
+            setTimeout(() => {
+                console.log('Reloading page...');
+                location.reload();
+            }, 2000);
+        } else {
+            console.error('Backend returned success=false:', data);
+            button.innerText = originalText;
+            button.style.background = originalBackground;
+            button.disabled = false;
+            showNotification(data.message || 'Error toggling status', 'error');
+            alert('Error: ' + (data.message || 'Error toggling status'));
+        }
+    })
+    .catch(error => {
+        console.error('Fetch error:', error);
+        button.innerText = originalText;
+        button.className = originalClass;
+        button.disabled = false;
+        showNotification('Error: ' + (error && error.message ? error.message : 'Unknown error occurred'), 'error');
+        alert('Error: ' + (error && error.message ? error.message : 'Unknown error occurred'));
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#22c55e' : '#ef4444'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        font-weight: 600;
+        animation: slideIn 0.3s ease-out;
+    `;
+    notification.innerText = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Auto-refresh page every 3 seconds to show real-time updates
+let autoRefreshEnabled = false;
+let autoRefreshInterval;
+
+function toggleAutoRefresh() {
+    autoRefreshEnabled = !autoRefreshEnabled;
+    const button = document.getElementById('autoRefreshBtn');
+    
+    if (autoRefreshEnabled) {
+        button.innerHTML = 'Pause Auto-Refresh';
+        button.style.background = '#ef4444';
+        autoRefreshInterval = setInterval(() => {
+            location.reload();
+        }, 3000); // Refresh every 3 seconds
+        showNotification('Auto-refresh enabled (every 3 seconds)');
+    } else {
+        button.innerHTML = 'Start Auto-Refresh';
+        button.style.background = '#22c55e';
+        clearInterval(autoRefreshInterval);
+        showNotification('Auto-refresh disabled');
+    }
+}
+
+// Add refresh button when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const headerSection = document.querySelector('.header-section');
+    if (headerSection) {
+        const refreshButton = document.createElement('button');
+        refreshButton.id = 'autoRefreshBtn';
+        refreshButton.innerHTML = 'Start Auto-Refresh';
+        refreshButton.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 10001;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        `;
+        refreshButton.onclick = toggleAutoRefresh;
+        refreshButton.onmouseover = function() {
+            this.style.transform = 'scale(1.05)';
+        };
+        refreshButton.onmouseout = function() {
+            this.style.transform = 'scale(1)';
+        };
+        document.body.appendChild(refreshButton);
+    }
+});
+
+// Chip ID Modal Functions
+function openChipIdModal() {
+    document.getElementById('chipIdModal').style.display = 'flex';
+    document.getElementById('new_chip_id').value = document.getElementById('chip-id-display').textContent;
+}
+
+function closeChipIdModal() {
+    document.getElementById('chipIdModal').style.display = 'none';
+}
+
+async function updateChipId() {
+    const newChipId = document.getElementById('new_chip_id').value.trim();
+    
+    if (!newChipId) {
+        alert('Please enter a valid Chip ID');
+        return;
+    }
+    
+    try {
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const response = await fetch('/api/admin/update-chip-id/{{ customer.id }}/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrftoken,
+            },
+            body: `chip_id=${encodeURIComponent(newChipId)}`
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            document.getElementById('chip-id-display').textContent = newChipId;
+            closeChipIdModal();
+            alert('Chip ID updated successfully!');
+        } else {
+            alert(data.message || 'Failed to update Chip ID');
+        }
+    } catch (error) {
+        alert('An error occurred. Please try again.');
+        console.error('Error:', error);
+    }
+}
+</script>
+
+<!-- Chip ID Modal -->
+<div id="chipIdModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: #1e293b; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);">
+        <h2 style="color: white; margin-bottom: 20px; font-size: 24px;">📱 Update ESP32 Chip ID</h2>
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; color: #94a3b8; font-weight: 600; margin-bottom: 8px;">ESP32 Chip ID</label>
+            <input type="text" id="new_chip_id" placeholder="Enter ESP32 Chip ID (e.g., ESP32-XXXXXXXXXXXX)" style="width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; color: white; font-family: monospace; font-size: 14px;">
+            <small style="color: #94a3b8; display: block; margin-top: 5px;">This will associate the real ESP32 device with this customer</small>
+        </div>
+        
+        <div style="background: rgba(14, 165, 233, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 3px solid #0ea5e9;">
+            <strong style="display: block; margin-bottom: 5px; color: #0ea5e9;">Important:</strong>
+            <p style="margin: 0; font-size: 13px; color: #cbd5e0;">
+                Make sure the Chip ID matches the actual ESP32 device. All recharges and sensor data will be linked to this device.
+            </p>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <button onclick="updateChipId()" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                ✅ Update Chip ID
+            </button>
+            <button onclick="closeChipIdModal()" style="flex: 1; padding: 12px; background: rgba(255, 255, 255, 0.1); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+</style>
+{% endblock %}

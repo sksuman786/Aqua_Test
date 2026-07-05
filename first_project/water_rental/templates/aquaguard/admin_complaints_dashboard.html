@@ -1,0 +1,715 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}Complaints Dashboard - AquaGuard Admin{% endblock %}
+
+{% block content %}
+<style>
+        /* Custom dropdown styling for better visibility */
+        select, select option {
+            background-color: #222b3a !important;
+            color: #fff !important;
+            border: 1px solid #0ea5e9 !important;
+        }
+        select:focus {
+            background-color: #2a3b4d !important;
+            color: #fff !important;
+            border-color: #3b82f6 !important;
+        }
+        /* For Chrome/Edge: force dropdown arrow color */
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            padding-right: 30px;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="white" height="16" viewBox="0 0 24 24" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position-x: 100%;
+            background-position-y: 50%;
+        }
+    .dashboard-page {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        color: white;
+        padding: 40px 30px;
+        min-height: 100vh;
+        width: 100%;
+    }
+
+    @media screen and (max-width: 768px) {
+        .dashboard-page {
+            margin-left: 0;
+            width: 100%;
+            padding: 20px 15px;
+        }
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        font-size: 32px;
+        margin: 0;
+        margin-bottom: 8px;
+    }
+
+    .subtitle {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 14px;
+    }
+
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .metric-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s;
+    }
+
+    .metric-card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(14, 165, 233, 0.3);
+    }
+
+    .metric-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #0ea5e9;
+        margin-bottom: 10px;
+    }
+
+    .metric-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.7);
+        letter-spacing: 0.5px;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+
+    .card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 25px;
+    }
+
+    .card h2 {
+        font-size: 18px;
+        margin-bottom: 20px;
+        color: #0ea5e9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .chart-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        margin-top: 20px;
+    }
+
+    .chart-item {
+        text-align: center;
+        flex: 1;
+    }
+
+    .chart-bar {
+        width: 40px;
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        border-radius: 4px 4px 0 0;
+        margin: 0 auto 10px;
+        position: relative;
+        min-height: 20px;
+    }
+
+    .chart-bar-open {
+        background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .chart-bar-in_progress {
+        background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+    }
+
+    .chart-bar-resolved {
+        background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+    }
+
+    .chart-bar-closed {
+        background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%);
+    }
+
+    .chart-label {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 8px;
+    }
+
+    .chart-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: white;
+    }
+
+    .breakdown-list {
+        margin-top: 20px;
+    }
+
+    .breakdown-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border-left: 3px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .breakdown-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .breakdown-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+    }
+
+    .breakdown-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        font-size: 11px;
+        font-weight: 600;
+        color: #0ea5e9;
+    }
+
+    .breakdown-value {
+        font-weight: 700;
+        font-size: 16px;
+        color: white;
+    }
+
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .dot-open {
+        background: #ef4444;
+    }
+
+    .dot-in_progress {
+        background: #3b82f6;
+    }
+
+    .dot-resolved {
+        background: #22c55e;
+    }
+
+    .dot-closed {
+        background: #6b7280;
+    }
+
+    .priority-breakdown .breakdown-item {
+        border-left-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .overdue-section {
+        grid-column: 1 / -1;
+    }
+
+    .overdue-list {
+        margin-top: 15px;
+    }
+
+    .overdue-item {
+        padding: 12px;
+        background: rgba(239, 68, 68, 0.05);
+        border-left: 3px solid #ef4444;
+        border-radius: 4px;
+        margin-bottom: 10px;
+    }
+
+    .overdue-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .overdue-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+    }
+
+    .overdue-customer {
+        color: #fca5a5;
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    .overdue-days {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .overdue-problem {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 4px;
+    }
+
+    .overdue-priority {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .recent-section {
+        grid-column: 1 / -1;
+    }
+
+    .recent-table {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow-x: auto;
+        margin-top: 15px;
+        border-collapse: collapse;
+    }
+
+    .recent-table thead {
+        background: rgba(14, 165, 233, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .recent-table th {
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 13px;
+        text-transform: uppercase;
+        color: #0ea5e9;
+        letter-spacing: 0.5px;
+    }
+
+    .recent-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 14px;
+    }
+
+    .recent-table tbody tr:hover {
+        background: rgba(14, 165, 233, 0.05);
+    }
+
+    @media screen and (max-width: 1024px) {
+        .recent-table th {
+            padding: 12px 10px;
+            font-size: 11px;
+        }
+
+        .recent-table td {
+            padding: 10px 8px;
+            font-size: 12px;
+        }
+    }
+
+    @media screen and (max-width: 768px) {
+        .recent-table {
+            font-size: 12px !important;
+            display: block !important;
+            border: none !important;
+            background: transparent !important;
+            overflow: visible !important;
+            width: 100% !important;
+        }
+
+        .recent-table thead {
+            display: none !important;
+        }
+
+        .recent-table tbody {
+            display: block !important;
+            width: 100% !important;
+        }
+
+        .recent-table tbody tr {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 12px !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 8px !important;
+            padding: 12px !important;
+            margin-bottom: 15px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        .recent-table td {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            gap: 10px !important;
+            padding: 0 !important;
+            border: none !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            margin: 0 !important;
+        }
+
+        .recent-table td:before {
+            content: attr(data-label) !important;
+            font-weight: 600 !important;
+            color: #0ea5e9 !important;
+            font-size: 11px !important;
+            text-transform: uppercase !important;
+            min-width: 80px !important;
+            flex-shrink: 0 !important;
+        }
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 16px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-open {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .status-in_progress {
+        background: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .status-resolved {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status-closed {
+        background: rgba(107, 114, 128, 0.2);
+        color: #d1d5db;
+        border: 1px solid rgba(107, 114, 128, 0.3);
+    }
+
+    .priority-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 16px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .priority-low {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+    }
+
+    .priority-medium {
+        background: rgba(251, 191, 36, 0.2);
+        color: #fbbf24;
+    }
+
+    .priority-high {
+        background: rgba(249, 115, 22, 0.2);
+        color: #f97316;
+    }
+
+    .priority-critical {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+
+    .view-link {
+        color: #0ea5e9;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .view-link:hover {
+        color: #3b82f6;
+    }
+
+    .resolution-stat {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .resolution-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: conic-gradient(#22c55e 0deg 144deg, rgba(255, 255, 255, 0.1) 144deg 360deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .resolution-text {
+        font-size: 20px;
+        font-weight: 700;
+        color: white;
+    }
+
+    .resolution-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.6);
+        letter-spacing: 0.5px;
+    }
+
+    .resolution-info {
+        flex: 1;
+    }
+
+    .action-button {
+        display: inline-block;
+        background: rgba(14, 165, 233, 0.2);
+        color: #0ea5e9;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .action-button:hover {
+        background: rgba(14, 165, 233, 0.3);
+    }
+</style>
+
+<div class="dashboard-page">
+    <div class="page-header">
+        <h1>Complaints Dashboard</h1>
+        <p class="subtitle">Real-time analytics and overview of all support tickets</p>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-value">{{ total_complaints }}</div>
+            <div class="metric-label">Total Complaints</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value" style="color: #ef4444;">{{ open_count }}</div>
+            <div class="metric-label">Open</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value" style="color: #3b82f6;">{{ in_progress_count }}</div>
+            <div class="metric-label">In Progress</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value" style="color: #22c55e;">{{ resolved_count }}</div>
+            <div class="metric-label">Resolved</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value" style="color: #6b7280;">{{ closed_count }}</div>
+            <div class="metric-label">Closed</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value" style="color: #ef4444;">{{ overdue_count }}</div>
+            <div class="metric-label">Overdue</div>
+        </div>
+    </div>
+
+    <div class="content-grid">
+        <!-- Status Breakdown -->
+        <div class="card">
+            <h2>Status Breakdown</h2>
+            
+            <div class="breakdown-list">
+                <div class="breakdown-item">
+                    <div class="breakdown-label">
+                        <span class="status-dot dot-open"></span>
+                        Open
+                    </div>
+                    <div class="breakdown-value">{{ open_count }}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-label">
+                        <span class="status-dot dot-in_progress"></span>
+                        In Progress
+                    </div>
+                    <div class="breakdown-value">{{ in_progress_count }}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-label">
+                        <span class="status-dot dot-resolved"></span>
+                        Resolved
+                    </div>
+                    <div class="breakdown-value">{{ resolved_count }}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-label">
+                        <span class="status-dot dot-closed"></span>
+                        Closed
+                    </div>
+                    <div class="breakdown-value">{{ closed_count }}</div>
+                </div>
+            </div>
+
+            <!-- Resolution Rate -->
+            <div class="resolution-stat">
+                <div class="resolution-circle">
+                    <div class="resolution-text">{{ resolution_rate }}%</div>
+                </div>
+                <div class="resolution-info">
+                    <div class="resolution-text" style="font-size: 14px; margin-bottom: 5px;">Resolution Rate</div>
+                    <div class="resolution-label">{{ resolved_count }} out of {{ total_complaints }} complaints resolved</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Priority Breakdown -->
+        <div class="card priority-breakdown">
+            <h2>Priority Distribution</h2>
+            
+            <div class="breakdown-list">
+                {% for priority, count in priority_breakdown.items %}
+                    <div class="breakdown-item">
+                        <div class="breakdown-label">
+                            {% if priority == 'low' %}
+                                <span class="breakdown-badge" style="background: rgba(34, 197, 94, 0.2); color: #22c55e;">Low</span>
+                                Low Priority
+                            {% elif priority == 'medium' %}
+                                <span class="breakdown-badge" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24;">Med</span>
+                                Medium Priority
+                            {% elif priority == 'high' %}
+                                <span class="breakdown-badge" style="background: rgba(249, 115, 22, 0.2); color: #f97316;">High</span>
+                                High Priority
+                            {% elif priority == 'critical' %}
+                                <span class="breakdown-badge" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">Crit</span>
+                                Critical Priority
+                            {% endif %}
+                        </div>
+                        <div class="breakdown-value">{{ count }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Overdue Complaints -->
+        <div class="card overdue-section">
+            <h2 style="margin-bottom: 15px;">Overdue Complaints (7+ days)</h2>
+            
+            {% if overdue_complaints %}
+                <div class="overdue-list">
+                    {% for complaint in overdue_complaints %}
+                        <div class="overdue-item">
+                            <div class="overdue-header">
+                                <span class="overdue-customer">{{ complaint.customer.name }}</span>
+                                <span class="overdue-days">{{ complaint.days_since_complaint }}d open</span>
+                            </div>
+                            <div class="overdue-problem">
+                                {{ complaint.problem_statement|truncatewords:15 }}
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <span class="overdue-priority">
+                                    <strong>Priority:</strong> {{ complaint.get_priority_display }}
+                                </span>
+                                <a href="{% url 'aquaguard:admin-complaint-detail' complaint.id %}" class="action-button">
+                                    View & Resolve →
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="padding: 30px; text-align: center; color: rgba(255, 255, 255, 0.6);">
+                    <p style="margin: 0;">✓ No overdue complaints</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Complaints -->
+        <div class="card recent-section">
+            <h2>📋 Recent Complaints (Last 10)</h2>
+            
+            {% if recent_complaints %}
+                <table class="recent-table">
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Problem</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Filed</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for complaint in recent_complaints %}
+                            <tr>
+                                <td data-label="Customer">{{ complaint.customer.name }}</td>
+                                <td data-label="Problem" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                                    {{ complaint.problem_statement|truncatewords:8 }}
+                                </td>
+                                <td data-label="Priority">
+                                    <span class="priority-badge priority-{{ complaint.priority|lower }}">
+                                        {{ complaint.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td data-label="Status">
+                                    <span class="status-badge status-{{ complaint.status|lower }}">
+                                        {{ complaint.get_status_display }}
+                                    </span>
+                                </td>
+                                <td data-label="Filed" style="font-size: 12px;">{{ complaint.complain_date|date:"d M y" }}</td>
+                                <td data-label="Action">
+                                    <a href="{% url 'aquaguard:admin-complaint-detail' complaint.id %}" class="view-link">View</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div style="padding: 30px; text-align: center; color: rgba(255, 255, 255, 0.6);">
+                    <p style="margin: 0;">No complaints yet</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,553 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}Complaint Details - AquaGuard Admin{% endblock %}
+
+{% block content %}
+<style>
+    /* Override base layout to remove the white gap beside the sidebar/header */
+    body {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+    }
+
+    header {
+        display: none;
+    }
+
+    .content {
+        padding: 0;
+        margin-left: 250px;
+        background: transparent;
+    }
+
+    .complaint-detail-page {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        color: white;
+        padding: 40px 30px;
+        min-height: 100vh;
+        margin-left: 250px;
+        width: calc(100% - 250px);
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-header h1 {
+        font-size: 32px;
+        margin: 0;
+    }
+
+    .btn-back {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.2s;
+    }
+
+    .btn-back:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+
+    .card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 25px;
+    }
+
+    .card h2 {
+        font-size: 18px;
+        margin-bottom: 20px;
+        color: #0ea5e9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-value {
+        font-weight: 600;
+        font-size: 16px;
+        color: white;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-open {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .status-in_progress {
+        background: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .status-resolved {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status-closed {
+        background: rgba(107, 114, 128, 0.2);
+        color: #d1d5db;
+        border: 1px solid rgba(107, 114, 128, 0.3);
+    }
+
+    .status-pending {
+        background: rgba(251, 191, 36, 0.2);
+        color: #fbbf24;
+        border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .priority-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .priority-low {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .priority-medium {
+        background: rgba(251, 191, 36, 0.2);
+        color: #fbbf24;
+        border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .priority-high {
+        background: rgba(249, 115, 22, 0.2);
+        color: #f97316;
+        border: 1px solid rgba(249, 115, 22, 0.3);
+    }
+
+    .priority-critical {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .problem-section {
+        background: rgba(14, 165, 233, 0.1);
+        border-radius: 8px;
+        padding: 15px;
+        margin: 15px 0;
+        border-left: 3px solid #0ea5e9;
+    }
+
+    .problem-statement {
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.95);
+        font-size: 15px;
+    }
+
+    .assignment-form {
+        background: rgba(14, 165, 233, 0.05);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 12px;
+        text-transform: uppercase;
+        color: #0ea5e9;
+        margin-bottom: 8px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 10px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #0ea5e9;
+        background: rgba(14, 165, 233, 0.1);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-action.secondary {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-action.secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .timeline {
+        margin-top: 20px;
+    }
+
+    .timeline-item {
+        padding: 12px 0;
+        border-left: 2px solid rgba(255, 255, 255, 0.1);
+        padding-left: 15px;
+        margin-left: 5px;
+        position: relative;
+    }
+
+    .timeline-item:before {
+        content: '';
+        position: absolute;
+        left: -6px;
+        top: 0;
+        width: 10px;
+        height: 10px;
+        background: #0ea5e9;
+        border-radius: 50%;
+    }
+
+    .timeline-date {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+        margin-bottom: 4px;
+    }
+
+    .timeline-content {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+    }
+
+    .alert-overdue {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 15px;
+        color: #fecaca;
+    }
+
+    .alert-overdue strong {
+        color: #ef4444;
+    }
+
+    .sidebar-card {
+        margin-bottom: 15px;
+    }
+
+    .sidebar-card:last-child {
+        margin-bottom: 0;
+    }
+</style>
+
+<div class="complaint-detail-page">
+    <div class="page-header">
+        <div>
+            <a href="{% url 'aquaguard:admin-complaints-list' %}" class="btn-back">← Back to Complaints</a>
+        </div>
+    </div>
+
+    {% if complaint.is_overdue %}
+        <div class="alert-overdue">
+            <strong>OVERDUE!</strong> This complaint has been open for {{ complaint.days_since_complaint }} days
+        </div>
+    {% endif %}
+
+    <div class="content-grid">
+        <!-- Main Details -->
+        <div class="card">
+            <h2>🎫 Complaint Details</h2>
+            
+            <div class="info-row">
+                <span class="info-label">Ticket Number</span>
+                <span class="info-value" style="font-family: monospace; font-size: 18px; color: #0ea5e9;">{{ complaint.ticket_number }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">Status</span>
+                <span class="status-badge status-{{ complaint.status|lower }}">
+                    {{ complaint.get_status_display }}
+                </span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Priority</span>
+                <span class="priority-badge priority-{{ complaint.priority|lower }}">
+                    {{ complaint.get_priority_display }}
+                </span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Filed Date</span>
+                <span class="info-value">{{ complaint.complain_date|date:"d M Y, H:i" }}</span>
+            </div>
+
+            {% if complaint.closed_date %}
+                <div class="info-row">
+                    <span class="info-label">Closed Date</span>
+                    <span class="info-value">{{ complaint.closed_date|date:"d M Y, H:i" }}</span>
+                </div>
+            {% endif %}
+
+            <div class="info-row">
+                <span class="info-label">Days Open</span>
+                <span class="info-value">{{ complaint.days_since_complaint }} days</span>
+            </div>
+
+            <!-- Problem Statement -->
+            <h3 style="margin-top: 25px; margin-bottom: 10px; font-size: 14px; color: #0ea5e9; text-transform: uppercase; letter-spacing: 0.5px;">Problem Statement</h3>
+            <div class="problem-section">
+                <p class="problem-statement">{{ complaint.problem_statement }}</p>
+            </div>
+
+            <!-- Assignment Form -->
+            <h3 style="margin-top: 25px; margin-bottom: 10px; font-size: 14px; color: #0ea5e9; text-transform: uppercase; letter-spacing: 0.5px;">Manage Complaint</h3>
+            
+            <form method="post" class="assignment-form">
+                {% csrf_token %}
+                
+                {% if complaint.status != 'closed' %}
+                    <div class="form-group">
+                        <label for="assigned_to">Assign To Technician</label>
+                        <select id="assigned_to" name="assigned_to">
+                            <option value="">-- Select Technician --</option>
+                            {% for tech in technicians %}
+                                <option value="{{ tech.id }}" {% if complaint.assigned_person and complaint.assigned_person.id == tech.id %}selected{% endif %}>
+                                    {{ tech.name }} ({{ tech.specialization }}) - {{ tech.phone_number }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+
+                {% if complaint.status in 'open,in_progress' %}
+                    <div class="form-group">
+                        <label for="notes">Resolution Notes</label>
+                        <textarea id="notes" name="notes" placeholder="Add notes about the resolution...">{{ complaint.assigned_person_details }}</textarea>
+                    </div>
+
+                    <div class="action-buttons">
+                        {% if complaint.status != 'closed' %}
+                            <button type="submit" name="action" value="assign" class="btn-action">
+                                ▶️ Assign / Reassign
+                            </button>
+                        {% endif %}
+                        <button type="submit" name="action" value="resolve" class="btn-action">
+                            ✓ Mark Resolved
+                        </button>
+                    </div>
+                {% endif %}
+
+                {% if complaint.status in 'resolved' %}
+                    <div class="form-group">
+                        <label for="notes">Closing Notes</label>
+                        <textarea id="notes" name="notes" placeholder="Add final notes...">{{ complaint.resolution_notes }}</textarea>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="submit" name="action" value="close" class="btn-action">
+                            🔒 Close Complaint
+                        </button>
+                    </div>
+                {% endif %}
+
+                {% if complaint.status == 'closed' %}
+                    <div style="padding: 12px; background: rgba(34, 197, 94, 0.1); border-radius: 6px; color: #22c55e; text-align: center; font-weight: 600;">
+                        ✓ This complaint is closed
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Sidebar -->
+        <div>
+            <!-- Customer Info -->
+            <div class="card sidebar-card">
+                <h2>👤 Customer Information</h2>
+                
+                <div class="info-row">
+                    <span class="info-label">Name</span>
+                    <span class="info-value">{{ complaint.customer.name }}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Email</span>
+                    <span class="info-value" style="font-size: 13px; word-break: break-all;">{{ complaint.future_field1|default:"-" }}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Phone</span>
+                    <span class="info-value">{{ complaint.phone_no }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Address</span>
+                    <span class="info-value">{{ complaint.customer.customer_address|default:"-" }}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Device ID</span>
+                    <span class="info-value" style="font-family: monospace; font-size: 12px;">{{ complaint.device_id|default:complaint.customer.device_chip_id|default:"N/A" }}</span>
+                </div>
+
+                {% if complaint.customer %}
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                        <a href="{% url 'aquaguard:customer-details' complaint.customer.id %}" 
+                           style="display: inline-block; color: #0ea5e9; text-decoration: none; font-weight: 600; transition: all 0.2s;"
+                           onmouseover="this.style.color='#3b82f6'" 
+                           onmouseout="this.style.color='#0ea5e9'">
+                            View Customer Profile →
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Assignment Info -->
+            <div class="card sidebar-card">
+                <h2>📋 Assignment</h2>
+                
+                {% if complaint.assigned_person %}
+                    <div class="info-row">
+                        <span class="info-label">Assigned To</span>
+                        <span class="info-value">
+                            {{ complaint.assigned_person.name }}
+                            {% if complaint.assigned_person.phone_number %}
+                                <br><small style="color: rgba(14, 165, 233, 0.8);">📞 {{ complaint.assigned_person.phone_number }}</small>
+                            {% endif %}
+                            <br><small style="color: rgba(14, 165, 233, 0.8);">✉️ {{ complaint.assigned_person.email }}</small>
+                        </span>
+                    </div>
+                {% else %}
+                    <div style="padding: 12px; background: rgba(251, 191, 36, 0.1); border-radius: 6px; color: #fbbf24; text-align: center; font-weight: 600; margin-bottom: 15px;">
+                        Unassigned
+                    </div>
+                {% endif %}
+
+                {% if complaint.assigned_person_details %}
+                    <div style="margin-top: 12px; padding: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; font-size: 13px; color: rgba(255, 255, 255, 0.9);">
+                        <strong style="color: #0ea5e9;">Notes:</strong><br>
+                        {{ complaint.assigned_person_details }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Timeline -->
+            {% if complaint.closed_date or complaint.assigned_person_details %}
+                <div class="card sidebar-card">
+                    <h2>⏱️ Timeline</h2>
+                    
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-date">{{ complaint.complain_date|date:"d M Y, H:i" }}</div>
+                            <div class="timeline-content">Complaint filed</div>
+                        </div>
+
+                        {% if complaint.assigned_person %}
+                            <div class="timeline-item">
+                                <div class="timeline-date">Recently assigned</div>
+                                <div class="timeline-content">
+                                    Assigned to {{ complaint.assigned_person.name }}
+                                    {% if complaint.assigned_person.phone_number %}
+                                        (📞 {{ complaint.assigned_person.phone_number }})
+                                    {% endif %}
+                                    <br><small>✉️ {{ complaint.assigned_person.email }}</small>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if complaint.status in 'resolved,closed' %}
+                            <div class="timeline-item">
+                                <div class="timeline-date">{{ complaint.closed_date|date:"d M Y, H:i"|default:"Today" }}</div>
+                                <div class="timeline-content">{{ complaint.get_status_display }}</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

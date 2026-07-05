@@ -1,0 +1,524 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}Sensor Data Dashboard - AquaGuard{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<style>
+    .sensor-dashboard {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        color: white;
+        padding: 40px 30px;
+        min-height: 100vh;
+        margin-left: 0;
+        width: 100%;
+        border-radius: 0;
+    }
+
+    .container {
+        max-width: 100%;
+        margin: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        font-size: 32px;
+        margin-bottom: 10px;
+    }
+
+    .sensor-table {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .sensor-table thead {
+        background: rgba(14, 165, 233, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sensor-table th {
+        padding: 14px 16px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        color: #0ea5e9;
+        letter-spacing: 0.5px;
+    }
+
+    .sensor-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 13px;
+    }
+
+    .sensor-table tbody tr:hover {
+        background: rgba(14, 165, 233, 0.05);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-online {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status-offline {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .usage-value {
+        font-weight: 600;
+        color: #0ea5e9;
+    }
+
+    .usage-unit {
+        font-size: 11px;
+        opacity: 0.8;
+    }
+
+    .back-link {
+        color: #0ea5e9;
+        text-decoration: none;
+        margin-bottom: 20px;
+        display: inline-block;
+        font-weight: 600;
+        transition: color 0.3s;
+    }
+
+    .back-link:hover {
+        color: #06b6d4;
+    }
+
+    .legend {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 30px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        font-size: 13px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .legend-icon {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+    }
+</style>
+
+<div class="sensor-dashboard">
+    <div class="container">
+        <a href="{% url 'aquaguard:admin-dashboard' %}" class="back-link">← Back to Dashboard</a>
+
+        <div class="page-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>Water Usage & Sensor Data</h1>
+                    <p style="opacity: 0.8;">Real-time water consumption metrics across all devices</p>
+                </div>
+                <div id="refreshIndicator" style="background: rgba(14, 165, 233, 0.1); padding: 10px 16px; border-radius: 8px; border: 1px solid rgba(14, 165, 233, 0.3); font-size: 13px; color: #0ea5e9;">
+                    🔄 Auto-refresh: <span id="refreshTimer">30</span>s
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div style="margin-bottom: 30px;">
+            <form method="get" action="" style="display: flex; gap: 10px; max-width: 600px;">
+                <input type="text" name="search" placeholder="Search by customer name, email or device ID..." 
+                       value="{{ search_query }}"
+                       style="flex: 1; padding: 12px 20px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); color: white; font-size: 14px;">
+                <button type="submit" style="padding: 12px 30px; background: #0ea5e9; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                    Search
+                </button>
+                {% if search_query %}
+                <a href="?" style="padding: 12px 20px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; border-radius: 8px; text-decoration: none; font-weight: 600; display: flex; align-items: center;">
+                    ✕ Clear
+                </a>
+                {% endif %}
+            </form>
+            {% if search_query %}
+            <p style="margin-top: 10px; color: #0ea5e9; font-size: 14px;">
+                Searching for: "{{ search_query }}" - {{ sensor_data|length }} result{{ sensor_data|length|pluralize }}
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-icon" style="background: #0ea5e9;"></div>
+                <span><strong>24-Hour Usage:</strong> Water used in last 24 hours</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-icon" style="background: #22c55e;"></div>
+                <span><strong>Monthly Usage:</strong> Total usage in current month</span>
+            </div>
+            
+            <div class="legend-item">
+                <div class="legend-icon" style="background: #f97316;"></div>
+                <span><strong>Current Day:</strong> Usage since midnight today</span>
+            </div>
+        </div>
+
+        <!-- Sensor Data Table -->
+        <div style="overflow-x: auto;">
+            <table class="sensor-table">
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>Location</th>
+                        <th>Device Status</th>
+                        <th>System Status</th>
+                        <th>pH</th>
+                        <th>TDS (ppm)</th>
+                        <th>Water Quality</th>
+                        <th>Device Health</th>
+                        <th>Allocated Water (L)</th>
+                        <th>Remaining (L)</th>
+                        <th>Total Used (L)</th>
+                        <th>Flow Rate (L/min)</th>
+                        <th>Current Day (L)</th>
+                        <th>Per Day Avg (L)</th>
+                        <th>Last 24HR (L)</th>
+                        <th>Monthly (L)</th>
+                        
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in sensor_data %}
+                    <tr>
+                        <td style="font-weight: 600;">{{ data.customer.name }}</td>
+                        <td>{{ data.customer.location|default:"N/A" }}</td>
+                        <td>
+                            <span class="status-badge {% if data.device_status == 'online' %}status-online{% else %}status-offline{% endif %}">
+                                {{ data.device_status }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge {% if data.customer.block_unblock %}status-online{% else %}status-offline{% endif %}">
+                                {% if data.customer.block_unblock %}🟢 Active{% else %}🔴 Blocked{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="usage-value">{{ data.ph|floatformat:2|default:"--" }}</span>
+                        </td>
+                        <td>
+                            <span class="usage-value">{{ data.tds|floatformat:1|default:"--" }}</span>
+                        </td>
+                        <td>
+                            <span class="usage-value">{{ data.water_quality|default:"--" }}</span>
+                        </td>
+                        <td>
+                            {% if data.device_health %}
+                                <span class="usage-value" style="color: {% if data.device_health == 'Healthy' %}#22c55e{% elif data.device_health == 'Warning' %}#fbbf24{% else %}#ef4444{% endif %};">{{ data.device_health }}</span>
+                            {% else %}
+                                <span class="usage-value">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="usage-value">{{ data.allocated_water|floatformat:2 }}</span>
+                            <span class="usage-unit">liters</span>
+                        </td>
+                        <td>
+                            <span class="usage-value">{{ data.remaining_water|floatformat:2 }}</span>
+                            <span class="usage-unit">liters</span>
+                        </td>
+                        <td>
+                            <span class="usage-value">{{ data.total_used_water|floatformat:2 }}</span>
+                            <span class="usage-unit">liters</span>
+                        </td>
+                        <td>
+                            {% if data.flow_rate is not None %}
+                                <span class="usage-value">{{ data.flow_rate|floatformat:2 }}</span>
+                                <span class="usage-unit">L/min</span>
+                            {% else %}
+                                --
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="usage-value" style="color: #f97316;">{{ data.current_day_usage }}</span>
+                            <span class="usage-unit">liters</span>
+                        </td>
+                        <td>
+                            <span class="usage-value" style="color: #eab308;">{{ data.per_day_average }}</span>
+                            <span class="usage-unit">L/day</span>
+                        </td>
+                        <td>
+                            <span class="usage-value">{{ data.last_24hr_usage }}</span>
+                            <span class="usage-unit">liters</span>
+                        </td>
+                        <td>
+                            <span class="usage-value" style="color: #22c55e;">{{ data.monthly_usage }}</span>
+                            <span class="usage-unit">liters</span>
+                        </td>
+                        
+                        <td>
+                            <button onclick="toggleBlockUnblock('{{ data.customer.id }}', this)" 
+                                    data-toggle-url="{% url 'aquaguard:toggle-block' data.customer.id %}"
+                                    style="background: {% if data.customer.block_unblock %}#ef4444{% else %}#22c55e{% endif %}; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                    title="{% if data.customer.block_unblock %}Click to turn OFF the system{% else %}Click to turn ON the system{% endif %}">
+                                {% if data.customer.block_unblock %}Turn OFF{% else %}Turn ON{% endif %}
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="17" style="text-align: center; padding: 40px; opacity: 0.6;">
+                            No sensor data available yet
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Quick Actions -->
+        <div style="margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <a href="{% url 'aquaguard:customer-list' %}" style="background: rgba(14, 165, 233, 0.2); color: #0ea5e9; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; border: 1px solid #0ea5e9; transition: all 0.3s;">
+                View All Customers
+            </a>
+            <a href="{% url 'aquaguard:sensor-data' %}" style="background: #0ea5e9; color: white; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; transition: all 0.3s;">
+                Sensor Data Dashboard
+            </a>
+            <a href="{% url 'aquaguard:payment-history' %}" style="background: rgba(14, 165, 233, 0.2); color: #0ea5e9; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; border: 1px solid #0ea5e9; transition: all 0.3s;">
+                Payment History
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleBlockUnblock(customerId, button) {
+    console.log('=== TOGGLE BUTTON CLICKED ===');
+    console.log('Customer ID:', customerId);
+    console.log('Button element:', button);
+
+    // Show loading state
+    const originalText = button.innerText;
+    const originalBackground = button.style.background;
+    button.innerText = 'Processing...';
+    button.style.background = '#f59e0b'; // Orange loading color
+    button.disabled = true;
+
+    // Get the toggle URL
+    const toggleUrl = button.getAttribute('data-toggle-url') || `/customer/${customerId}/toggle-block/`;
+    console.log('Toggle URL:', toggleUrl);
+
+    // Get CSRF token
+    const csrfToken = getCookie('csrftoken');
+    console.log('CSRF Token available:', !!csrfToken, 'Value:', csrfToken ? csrfToken.substring(0, 10) + '...' : 'null');
+
+    if (!csrfToken) {
+        console.error('CSRF token not found!');
+        button.innerText = originalText;
+        button.style.background = originalBackground;
+        button.disabled = false;
+        showNotification('CSRF token missing. Please refresh the page.', 'error');
+        alert('CSRF token missing. Please refresh the page.');
+        return;
+    }
+
+    // Send POST request to toggle
+    console.log('Making fetch request...');
+    fetch(toggleUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({})
+    })
+    .then(async (response) => {
+        console.log('Response received. Status:', response.status);
+        console.log('Response headers:', response.headers);
+
+        const contentType = response.headers.get('content-type') || '';
+        console.log('Content-Type:', contentType);
+
+        // Check if this is a redirect (authentication failure)
+        if (response.status === 302 || response.status === 301) {
+            console.error('Redirect response - user not authenticated?');
+            const redirectUrl = response.headers.get('location');
+            console.log('Redirect URL:', redirectUrl);
+            throw new Error('Authentication required. Please refresh the page and log in again.');
+        }
+
+        if (!response.ok) {
+            const text = await response.text();
+            console.error('Response error text:', text);
+            throw new Error(text || ('Request failed: ' + response.status));
+        }
+        if (!contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Unexpected response type. Content:', text);
+            throw new Error('Unexpected response (not JSON): ' + text.slice(0, 60) + '...');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Parsed JSON response:', data);
+        if (data.success) {
+            console.log('Success! Showing notification...');
+            // Show success message
+            showNotification(data.message || 'System status updated successfully!', 'success');
+
+            // Also show browser alert as fallback
+            alert(data.message || 'System status updated successfully!');
+
+            // Update button appearance immediately for better UX
+            const isNowBlocked = data.block_unblock;
+            console.log('New block_unblock status:', isNowBlocked);
+            button.style.background = isNowBlocked ? '#ef4444' : '#22c55e';
+            button.innerText = isNowBlocked ? 'Turn OFF System' : 'Turn ON System';
+            button.title = isNowBlocked ? 'Click to turn OFF the system' : 'Click to turn ON the system';
+
+            // Reload the page after 2 seconds to show all updated data
+            console.log('Scheduling page reload in 2 seconds...');
+            setTimeout(() => {
+                console.log('Reloading page...');
+                location.reload();
+            }, 2000);
+        } else {
+            console.error('Backend returned success=false:', data);
+            button.innerText = originalText;
+            button.style.background = originalBackground;
+            button.disabled = false;
+            showNotification(data.message || 'Error toggling status', 'error');
+            alert('Error: ' + (data.message || 'Error toggling status'));
+        }
+    })
+    .catch(error => {
+        console.error('Fetch error:', error);
+        button.innerText = originalText;
+        button.style.background = originalBackground;
+        button.disabled = false;
+        showNotification('Error: ' + (error && error.message ? error.message : 'Unknown error occurred'), 'error');
+        alert('Error: ' + (error && error.message ? error.message : 'Unknown error occurred'));
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#22c55e' : '#ef4444'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        font-weight: 600;
+        animation: slideIn 0.3s ease-out;
+    `;
+    notification.innerText = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Auto-refresh functionality
+let refreshInterval = 30; // seconds
+let countdown = refreshInterval;
+
+function updateRefreshTimer() {
+    const timerElement = document.getElementById('refreshTimer');
+    if (timerElement) {
+        timerElement.textContent = countdown;
+        countdown--;
+        
+        if (countdown < 0) {
+            refreshPage();
+            countdown = refreshInterval;
+        }
+    }
+}
+
+function refreshPage() {
+    const indicator = document.getElementById('refreshIndicator');
+    indicator.classList.add('refreshing');
+    indicator.innerHTML = '🔄 Refreshing...';
+    indicator.style.animation = 'pulse 0.5s ease-in-out';
+    
+    showNotification('Refreshing sensor data...', 'success');
+    setTimeout(() => location.reload(), 1000);
+}
+
+// Start auto-refresh timer
+setInterval(updateRefreshTimer, 1000);
+</script>
+
+<style>
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.refreshing {
+    animation: pulse 0.5s ease-in-out infinite;
+}
+</style>
+{% endblock %}

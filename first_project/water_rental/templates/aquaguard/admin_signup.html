@@ -1,0 +1,283 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Signup - AquaGuard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .signup-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            color: #0ea5e9;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .logo p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #334155;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+
+        .btn-signup {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-signup:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.3);
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .login-link p {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .login-link a {
+            color: #0ea5e9;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: color 0.3s ease;
+        }
+
+        .login-link a:hover {
+            color: #0284c7;
+        }
+
+        .messages {
+            margin-bottom: 20px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .alert-error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .alert-success {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+
+        .password-requirements {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 5px;
+            padding-left: 5px;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-wrapper input {
+            padding-right: 45px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 14px;
+            cursor: pointer;
+            color: #64748b;
+            font-size: 20px;
+            user-select: none;
+        }
+
+        .toggle-password:hover {
+            color: #0ea5e9;
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-container">
+        <div class="logo">
+            <h1> AquaGuard</h1>
+            <p>Create Admin Account</p>
+        </div>
+
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'aquaguard:admin-signup' %}">
+            {% csrf_token %}
+            
+            {% if show_otp_field %}
+                <!-- OTP Verification Step -->
+                <input type="hidden" name="action" value="verify_otp">
+                
+                <div class="form-group">
+                    <label for="otp">Enter OTP *</label>
+                    <input 
+                        type="text" 
+                        id="otp" 
+                        name="otp" 
+                        placeholder="Enter 6-digit OTP"
+                        required
+                        maxlength="6"
+                        pattern="[0-9]{6}"
+                        autofocus
+                        style="text-align: center; font-size: 24px; letter-spacing: 5px;"
+                    >
+                    <div class="password-requirements">
+                        Please enter the 6-digit OTP sent to your email
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-signup">✅ Verify OTP & Create Account</button>
+                
+                <div style="text-align: center; margin-top: 15px;">
+                    <a href="{% url 'aquaguard:admin-signup' %}" style="color: #0ea5e9; text-decoration: none; font-size: 14px;">← Start Over</a>
+                </div>
+            {% else %}
+                <!-- Registration Form Step -->
+                <input type="hidden" name="action" value="send_otp">
+                
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autocomplete="username" minlength="3" autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required autocomplete="email">
+                    <div class="password-requirements">
+                        We'll send an OTP to verify your email
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" required autocomplete="new-password" minlength="8">
+                        <span class="toggle-password" onclick="togglePassword('password', this)">👁</span>
+                    </div>
+                    <div class="password-requirements">
+                        Must be at least 8 characters long
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password_confirm">Confirm Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password_confirm" name="password_confirm" required autocomplete="new-password" minlength="8">
+                        <span class="toggle-password" onclick="togglePassword('password_confirm', this)">👁</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-signup">📧 Send OTP to Email</button>
+            {% endif %}
+        </form>
+
+        <div class="login-link">
+            <p>Already have an account?</p>
+            <a href="{% url 'aquaguard:admin-login' %}">Login Here</a>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(fieldId, icon) {
+            const field = document.getElementById(fieldId);
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.style.textDecoration = 'line-through';
+            } else {
+                field.type = 'password';
+                icon.style.textDecoration = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="content">
+    <h1>{% trans "Schedule OTA Update" %}</h1>
+    <p>{% blocktrans count counter=customers|length %}You have selected {{ counter }} device for this rollout.{% plural %}You have selected {{ counter }} devices for this rollout.{% endblocktrans %}</p>
+
+    <form method="post">{% csrf_token %}
+        <fieldset class="module aligned">
+            {{ form.as_p }}
+        </fieldset>
+
+        {% for obj in customers %}
+            <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk }}">
+        {% endfor %}
+        <input type="hidden" name="action" value="{{ action }}">
+        {% if select_across %}
+            <input type="hidden" name="select_across" value="{{ select_across }}">
+        {% endif %}
+
+        <div class="submit-row">
+            <input type="submit" name="apply" value="{% trans "Schedule update" %}" class="default">
+            <a href=".." class="button cancel-link">{% trans "Cancel" %}</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

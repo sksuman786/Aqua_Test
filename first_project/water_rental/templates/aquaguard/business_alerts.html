@@ -1,0 +1,862 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}Business Alerts - AquaGuard{% endblock %}
+
+{% block content %}
+<style>
+    .alerts-page {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        color: white;
+        padding: 40px 30px;
+        min-height: 100vh;
+        margin-left: 0;
+        width: 100%;
+        border-radius: 0;
+    }
+
+    .container {
+        max-width: 100%;
+        margin: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        font-size: 32px;
+        margin-bottom: 10px;
+    }
+
+    .back-link {
+        color: #0ea5e9;
+        text-decoration: none;
+        margin-bottom: 20px;
+        display: inline-block;
+        font-weight: 600;
+        transition: color 0.3s;
+    }
+
+    .back-link:hover {
+        color: #06b6d4;
+    }
+
+    /* Alert Summary Cards */
+    .alert-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .summary-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .summary-card:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(14, 165, 233, 0.3);
+    }
+
+    .summary-card.active {
+        background: rgba(14, 165, 233, 0.3);
+        border: 2px solid #0ea5e9;
+        transform: translateY(-5px);
+    }
+
+    .summary-card.critical {
+        border-color: rgba(239, 68, 68, 0.5);
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    .summary-card.high {
+        border-color: rgba(251, 146, 60, 0.5);
+        background: rgba(251, 146, 60, 0.1);
+    }
+
+    .summary-card h3 {
+        font-size: 12px;
+        text-transform: uppercase;
+        color: #0ea5e9;
+        margin-bottom: 8px;
+        letter-spacing: 0.5px;
+    }
+
+    .summary-card.critical h3 {
+        color: #ef4444;
+    }
+
+    .summary-card.high h3 {
+        color: #fb923c;
+    }
+
+    .summary-card .number {
+        font-size: 36px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .summary-card.critical .number {
+        color: #ef4444;
+    }
+
+    .summary-card.high .number {
+        color: #fb923c;
+    }
+
+    /* Alert Items */
+    .alert-item {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 24px;
+        margin-bottom: 20px;
+        transition: all 0.3s;
+    }
+
+    .alert-item:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .alert-item.critical {
+        border-color: rgba(239, 68, 68, 0.5);
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    .alert-item.high {
+        border-color: rgba(251, 146, 60, 0.5);
+        background: rgba(251, 146, 60, 0.1);
+    }
+
+    .alert-item.medium {
+        border-color: rgba(250, 204, 21, 0.5);
+        background: rgba(250, 204, 21, 0.08);
+    }
+
+    .alert-item.low {
+        border-color: rgba(148, 163, 184, 0.5);
+        background: rgba(148, 163, 184, 0.05);
+    }
+
+    .alert-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+
+    .alert-message {
+        font-size: 18px;
+        font-weight: 600;
+        color: white;
+        flex: 1;
+    }
+
+    .alert-item.critical .alert-message {
+        color: #fca5a5;
+    }
+
+    .alert-item.high .alert-message {
+        color: #fdba74;
+    }
+
+    .alert-item.medium .alert-message {
+        color: #fef08a;
+    }
+
+    .severity-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-left: 15px;
+    }
+
+    .severity-critical {
+        background: rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.5);
+    }
+
+    .severity-high {
+        background: rgba(251, 146, 60, 0.3);
+        color: #fb923c;
+        border: 1px solid rgba(251, 146, 60, 0.5);
+    }
+
+    .severity-medium {
+        background: rgba(250, 204, 21, 0.3);
+        color: #fbbf24;
+        border: 1px solid rgba(250, 204, 21, 0.5);
+    }
+
+    .severity-low {
+        background: rgba(148, 163, 184, 0.3);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+    }
+
+    .alert-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .detail-item {
+        font-size: 13px;
+    }
+
+    .detail-label {
+        color: #0ea5e9;
+        font-weight: 600;
+        margin-right: 5px;
+    }
+
+    .btn-view {
+        display: inline-block;
+        padding: 8px 16px;
+        background: rgba(14, 165, 233, 0.2);
+        color: #0ea5e9;
+        border: 1px solid #0ea5e9;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 13px;
+        margin-top: 15px;
+        transition: all 0.3s;
+    }
+
+    .btn-view:hover {
+        background: rgba(14, 165, 233, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        opacity: 0.6;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        margin: 40px 0;
+    }
+
+    .empty-state p {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+
+    .empty-state .emoji {
+        font-size: 48px;
+        margin-bottom: 15px;
+    }
+
+    .btn-dismiss {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid #ef4444;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-left: 10px;
+    }
+
+    .btn-dismiss:hover {
+        background: rgba(239, 68, 68, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .btn-dismiss-all {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid #ef4444;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-dismiss-all:hover {
+        background: rgba(239, 68, 68, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-dismiss-all:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .auto-refresh-indicator {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(14, 165, 233, 0.2);
+        color: #0ea5e9;
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1px solid #0ea5e9;
+        font-size: 12px;
+        font-weight: 600;
+        z-index: 1000;
+    }
+
+    .auto-refresh-indicator.refreshing {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border-color: #22c55e;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+</style>
+
+<!-- Auto-refresh indicator -->
+<div class="auto-refresh-indicator" id="refreshIndicator">
+    🔄 Auto-refresh: <span id="refreshTimer">30</span>s
+</div>
+
+<div class="alerts-page">
+    <div class="container">
+        <a href="{% url 'aquaguard:admin-dashboard' %}" class="back-link">← Back to Dashboard</a>
+
+        <div class="page-header">
+            <h1> Business Alerts</h1>
+            <p style="opacity: 0.8;">Real-time notifications for rental system management</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div style="margin-bottom: 30px;">
+            <form method="get" action="" style="display: flex; gap: 10px; max-width: 600px;">
+                <input type="text" name="search" placeholder="Search by customer name, alert type, message or severity..." 
+                       value="{{ search_query }}"
+                       style="flex: 1; padding: 12px 20px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); color: white; font-size: 14px;">
+                <button type="submit" style="padding: 12px 30px; background: #0ea5e9; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                    Search
+                </button>
+                {% if search_query %}
+                <a href="?" style="padding: 12px 20px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; border-radius: 8px; text-decoration: none; font-weight: 600; display: flex; align-items: center;">
+                    ✕ Clear
+                </a>
+                {% endif %}
+            </form>
+            {% if search_query %}
+            <p style="margin-top: 10px; color: #0ea5e9; font-size: 14px;">
+                Searching for: "{{ search_query }}" - {{ alerts|length }} result{{ alerts|length|pluralize }}
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- Alert Summary -->
+        <div class="alert-summary">
+            <div class="summary-card {% if summary.critical > 0 %}critical{% endif %}" onclick="filterAlerts('critical')" data-filter="critical">
+                <h3>Critical Alerts</h3>
+                <div class="number">{{ summary.critical }}</div>
+                <p style="font-size: 12px; opacity: 0.8;">Immediate action required</p>
+            </div>
+            <div class="summary-card {% if summary.high > 0 %}high{% endif %}" onclick="filterAlerts('high')" data-filter="high">
+                <h3>High Priority</h3>
+                <div class="number">{{ summary.high }}</div>
+                <p style="font-size: 12px; opacity: 0.8;">Urgent attention needed</p>
+            </div>
+            <div class="summary-card" onclick="filterAlerts('medium')" data-filter="medium">
+                <h3>Medium Priority</h3>
+                <div class="number">{{ summary.medium }}</div>
+                <p style="font-size: 12px; opacity: 0.8;">Monitor closely</p>
+            </div>
+            <div class="summary-card" onclick="filterAlerts('all')" data-filter="all">
+                <h3>Total Alerts</h3>
+                <div class="number" style="color: #0ea5e9;">{{ summary.total }}</div>
+                <p style="font-size: 12px; opacity: 0.8;">Active notifications</p>
+            </div>
+        </div>
+
+        <!-- Alert List -->
+        <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: 24px; font-weight: 600; margin: 0;">Active Alerts <span id="filterStatus" style="font-size: 16px; color: #0ea5e9; font-weight: 400;"></span></h2>
+            {% if alerts %}
+            <button onclick="dismissAllAlerts()" class="btn-dismiss-all" id="dismissAllBtn">
+                <span>✖</span>
+                <span>Dismiss All Visible</span>
+            </button>
+            {% endif %}
+        </div>
+        {% if alerts %}
+        <div class="alerts-list" id="alertsList" id="alertsList">
+            {% for alert in alerts %}
+            <div class="alert-item {{ alert.severity }}" data-severity="{{ alert.severity }}">
+                <div class="alert-header">
+                    <div class="alert-message">{{ alert.message }}</div>
+                    <span class="severity-badge severity-{{ alert.severity }}">{{ alert.severity|upper }}</span>
+                </div>
+                
+                <div class="alert-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Customer:</span>
+                        <span>{{ alert.customer.name }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Email:</span>
+                        <span>{{ alert.customer.email }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Phone:</span>
+                        <span>{{ alert.customer.phone_number }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Device ID:</span>
+                        <span style="font-family: monospace; font-size: 11px;">{{ alert.customer.device_chip_id|truncatechars:15 }}</span>
+                    </div>
+                    
+                    {% if alert.alert_type == 'recharge_expired' or alert.alert_type == 'recharge_expiring' %}
+                        <div class="detail-item">
+                            <span class="detail-label">Last Recharge:</span>
+                            <span>{{ alert.details.last_recharge|date:"M d, Y" }}</span>
+                        </div>
+                        {% if alert.details.days_overdue %}
+                        <div class="detail-item">
+                            <span class="detail-label">Days Overdue:</span>
+                            <span style="color: #ef4444; font-weight: 600;">{{ alert.details.days_overdue }}</span>
+                        </div>
+                        {% endif %}
+                        {% if alert.details.days_remaining %}
+                        <div class="detail-item">
+                            <span class="detail-label">Days Remaining:</span>
+                            <span style="color: #fbbf24; font-weight: 600;">{{ alert.details.days_remaining }}</span>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                    
+                    {% if alert.alert_type == 'water_low' or alert.alert_type == 'water_depleted' or alert.alert_type == 'high_usage' %}
+                        {% if alert.details.litres_remaining %}
+                        <div class="detail-item">
+                            <span class="detail-label">Water Remaining:</span>
+                            <span style="color: #fbbf24; font-weight: 600;">{{ alert.details.litres_remaining|floatformat:1 }}L</span>
+                        </div>
+                        {% endif %}
+                        {% if alert.details.litres_used %}
+                        <div class="detail-item">
+                            <span class="detail-label">Water Used:</span>
+                            <span>{{ alert.details.litres_used|floatformat:1 }}L</span>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                    
+                    {% if alert.alert_type == 'payment_failed' %}
+                        <div class="detail-item">
+                            <span class="detail-label">Failed Payments:</span>
+                            <span style="color: #ef4444; font-weight: 600;">{{ alert.details.failed_count }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <a href="{% url 'aquaguard:customer-details' alert.customer.id %}" class="btn-view">View Customer Details →</a>
+                    <button onclick="dismissAlert({{ alert.customer.id }}, '{{ alert.alert_type }}', this)" class="btn-dismiss">
+                        ✖ Dismiss
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="empty-state">
+            <div class="emoji">✅</div>
+            <p style="font-size: 24px; font-weight: 600; color: #22c55e;">All Clear!</p>
+            <p>No active alerts at this time. Your rental system is running smoothly.</p>
+        </div>
+        {% endif %}
+
+        <!-- Quick Actions -->
+        <div style="margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <a href="{% url 'aquaguard:customer-list' %}" style="background: rgba(14, 165, 233, 0.2); color: #0ea5e9; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; border: 1px solid #0ea5e9; transition: all 0.3s;">
+                View All Customers
+            </a>
+            <a href="{% url 'aquaguard:sensor-data' %}" style="background: rgba(14, 165, 233, 0.2); color: #0ea5e9; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; border: 1px solid #0ea5e9; transition: all 0.3s;">
+                Sensor Data Dashboard
+            </a>
+            <a href="{% url 'aquaguard:payment-history' %}" style="background: rgba(14, 165, 233, 0.2); color: #0ea5e9; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; border: 1px solid #0ea5e9; transition: all 0.3s;">
+                Payment History
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+// Filter alerts by severity
+function filterAlerts(filterType) {
+    // Remove active class from all summary cards
+    document.querySelectorAll('.summary-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    
+    // Add active class to clicked card
+    const clickedCard = document.querySelector(`[data-filter="${filterType}"]`);
+    if (clickedCard) {
+        clickedCard.classList.add('active');
+    }
+    
+    // Get all alert items
+    const alertItems = document.querySelectorAll('.alert-item');
+    let visibleCount = 0;
+    
+    alertItems.forEach(item => {
+        const severity = item.getAttribute('data-severity');
+        
+        if (filterType === 'all') {
+            item.style.display = '';
+            visibleCount++;
+        } else if (filterType === severity) {
+            item.style.display = '';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Update filter status display
+    const filterStatus = document.getElementById('filterStatus');
+    if (filterType === 'all') {
+        filterStatus.textContent = '(Showing all alerts)';
+    } else if (filterType === 'critical') {
+        filterStatus.textContent = `(Showing ${visibleCount} critical alerts)`;
+        filterStatus.style.color = '#ef4444';
+    } else if (filterType === 'high') {
+        filterStatus.textContent = `(Showing ${visibleCount} high priority alerts)`;
+        filterStatus.style.color = '#fb923c';
+    } else if (filterType === 'medium') {
+        filterStatus.textContent = `(Showing ${visibleCount} medium priority alerts)`;
+        filterStatus.style.color = '#fbbf24';
+    } else if (filterType === 'low') {
+        filterStatus.textContent = `(Showing ${visibleCount} low priority alerts)`;
+        filterStatus.style.color = '#94a3b8';
+    }
+    
+    // Show "no results" message if no alerts match filter
+    const existingNoResults = document.querySelector('.no-results-message');
+    if (existingNoResults) {
+        existingNoResults.remove();
+    }
+    
+    if (visibleCount === 0) {
+        const alertsList = document.getElementById('alertsList');
+        if (alertsList) {
+            const noResultsDiv = document.createElement('div');
+            noResultsDiv.className = 'empty-state no-results-message';
+            noResultsDiv.innerHTML = `
+                <p style="font-size: 24px; font-weight: 600;">No ${filterType} alerts found</p>
+                <p>There are no ${filterType === 'all' ? '' : filterType + ' priority'} alerts at this time.</p>
+            `;
+            alertsList.appendChild(noResultsDiv);
+        }
+    }
+}
+
+// Dismiss all visible alerts
+function dismissAllAlerts() {
+    const visibleAlerts = Array.from(document.querySelectorAll('.alert-item')).filter(item => {
+        return item.style.display !== 'none' && !item.classList.contains('no-results-message');
+    });
+    
+    if (visibleAlerts.length === 0) {
+        showNotification('No alerts to dismiss', 'error');
+        return;
+    }
+    
+    const confirmMessage = `Are you sure you want to dismiss all ${visibleAlerts.length} visible alert(s)?`;
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    const dismissAllBtn = document.getElementById('dismissAllBtn');
+    dismissAllBtn.disabled = true;
+    dismissAllBtn.innerHTML = '<span>⏳</span><span>Dismissing...</span>';
+    
+    let dismissedCount = 0;
+    let failedCount = 0;
+    
+    // Process alerts one by one
+    const dismissPromises = visibleAlerts.map(alertItem => {
+        const dismissBtn = alertItem.querySelector('.btn-dismiss');
+        if (!dismissBtn) return Promise.resolve();
+        
+        const onclickAttr = dismissBtn.getAttribute('onclick');
+        const match = onclickAttr.match(/dismissAlert\((\d+),\s*'([^']+)'/);
+        
+        if (!match) return Promise.resolve();
+        
+        const customerId = match[1];
+        const alertType = match[2];
+        
+        return fetch(`/alert/dismiss/${customerId}/${alertType}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                dismissedCount++;
+                alertItem.style.opacity = '0';
+                alertItem.style.transform = 'translateX(50px)';
+            } else {
+                failedCount++;
+            }
+        })
+        .catch(error => {
+            console.error('Error dismissing alert:', error);
+            failedCount++;
+        });
+    });
+    
+    Promise.all(dismissPromises).then(() => {
+        setTimeout(() => {
+            visibleAlerts.forEach(item => {
+                if (item.style.opacity === '0') {
+                    item.remove();
+                }
+            });
+            
+            updateSummaryCounts();
+            
+            if (dismissedCount > 0) {
+                showNotification(`Successfully dismissed ${dismissedCount} alert(s)`, 'success');
+            }
+            if (failedCount > 0) {
+                showNotification(`Failed to dismiss ${failedCount} alert(s)`, 'error');
+            }
+            
+            // Check if no alerts remaining
+            const remainingAlerts = document.querySelectorAll('.alert-item:not(.no-results-message)');
+            if (remainingAlerts.length === 0) {
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                dismissAllBtn.disabled = false;
+                dismissAllBtn.innerHTML = '<span>✖</span><span>Dismiss All Visible</span>';
+            }
+        }, 500);
+    });
+}
+
+// CSRF token for POST requests
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+// Dismiss alert function
+function dismissAlert(customerId, alertType, button) {
+    if (!confirm('Are you sure you want to dismiss this alert?')) {
+        return;
+    }
+
+    // Disable button during request
+    button.disabled = true;
+    button.textContent = 'Dismissing...';
+
+    fetch(`/alert/dismiss/${customerId}/${alertType}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Remove alert from DOM with animation
+            const alertItem = button.closest('.alert-item');
+            alertItem.style.opacity = '0';
+            alertItem.style.transform = 'translateX(50px)';
+            
+            setTimeout(() => {
+                alertItem.remove();
+                
+                // Update summary counts
+                updateSummaryCounts();
+                
+                // Check if no alerts remaining
+                const alertsList = document.querySelector('.alerts-list');
+                if (alertsList && alertsList.children.length === 0) {
+                    // Reload page to show "All Clear" message
+                    location.reload();
+                }
+            }, 300);
+            
+            showNotification('Alert dismissed successfully', 'success');
+        } else {
+            showNotification('Failed to dismiss alert', 'error');
+            button.disabled = false;
+            button.textContent = '✖ Dismiss';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred', 'error');
+        button.disabled = false;
+        button.textContent = '✖ Dismiss';
+    });
+}
+
+// Update summary counts after dismissing alert
+function updateSummaryCounts() {
+    const alertItems = document.querySelectorAll('.alert-item');
+    let critical = 0, high = 0, medium = 0;
+    
+    alertItems.forEach(item => {
+        if (item.classList.contains('critical')) critical++;
+        else if (item.classList.contains('high')) high++;
+        else if (item.classList.contains('medium')) medium++;
+    });
+    
+    const summaryCards = document.querySelectorAll('.summary-card');
+    summaryCards[0].querySelector('.number').textContent = critical;
+    summaryCards[1].querySelector('.number').textContent = high;
+    summaryCards[2].querySelector('.number').textContent = medium;
+    summaryCards[3].querySelector('.number').textContent = critical + high + medium;
+    
+    // Update card styling
+    summaryCards[0].classList.toggle('critical', critical > 0);
+    summaryCards[1].classList.toggle('high', high > 0);
+}
+
+// Show notification
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        padding: 15px 25px;
+        border-radius: 8px;
+        font-weight: 600;
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+        background: ${type === 'success' ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)'};
+        color: white;
+        border: 1px solid ${type === 'success' ? '#22c55e' : '#ef4444'};
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Auto-refresh functionality
+let refreshInterval = 30; // seconds
+let countdown = refreshInterval;
+let lastUpdateTime = new Date().getTime();
+
+function updateRefreshTimer() {
+    const timerElement = document.getElementById('refreshTimer');
+    if (timerElement) {
+        timerElement.textContent = countdown;
+        countdown--;
+        
+        if (countdown < 0) {
+            checkForUpdates();
+            countdown = refreshInterval;
+        }
+    }
+}
+
+function checkForUpdates() {
+    const indicator = document.getElementById('refreshIndicator');
+    indicator.classList.add('refreshing', 'pulse');
+    indicator.innerHTML = '🔄 Checking for updates...';
+    
+    fetch('/business-alerts/api/')
+        .then(response => response.json())
+        .then(data => {
+            const serverTime = new Date(data.timestamp).getTime();
+            
+            // Check if there are new alerts or changes
+            const currentAlertCount = document.querySelectorAll('.alert-item').length;
+            const serverAlertCount = data.alerts.length;
+            
+            if (serverTime > lastUpdateTime || currentAlertCount !== serverAlertCount) {
+                // New alerts detected - reload page
+                showNotification('New alerts detected. Refreshing...', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                // No changes
+                indicator.classList.remove('refreshing', 'pulse');
+                indicator.innerHTML = `🔄 Auto-refresh: <span id="refreshTimer">${countdown}</span>s`;
+                countdown = refreshInterval;
+            }
+        })
+        .catch(error => {
+            console.error('Auto-refresh error:', error);
+            indicator.classList.remove('refreshing', 'pulse');
+            indicator.innerHTML = `🔄 Auto-refresh: <span id="refreshTimer">${countdown}</span>s`;
+        });
+}
+
+// Start auto-refresh timer
+setInterval(updateRefreshTimer, 1000);
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+
+{% endblock %}

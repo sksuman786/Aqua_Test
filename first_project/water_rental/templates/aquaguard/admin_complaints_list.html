@@ -1,0 +1,615 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}Complaints Management - AquaGuard Admin{% endblock %}
+
+{% block content %}
+<style>
+    .complaints-page {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        color: white;
+        padding: 40px 30px;
+        min-height: 100vh;
+        width: 100%;
+    }
+
+    @media screen and (max-width: 768px) {
+        .complaints-page {
+            margin-left: 0;
+            width: 100%;
+            padding: 20px 15px;
+        }
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-header h1 {
+        font-size: 32px;
+        margin: 0;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-create {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.2s;
+        margin-left: 10px;
+    }
+
+    .btn-create:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(16, 185, 129, 0.4);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .stat-card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(14, 165, 233, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #0ea5e9;
+        margin-bottom: 8px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.7);
+        letter-spacing: 0.5px;
+    }
+
+    .filters-section {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .filters-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 15px;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filter-group label {
+        font-size: 12px;
+        text-transform: uppercase;
+        color: #0ea5e9;
+        margin-bottom: 8px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 10px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    .filter-group input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+        outline: none;
+        border-color: #0ea5e9;
+        background: rgba(14, 165, 233, 0.1);
+    }
+
+    .filter-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        grid-column: 1 / -1;
+    }
+
+    .btn-filter {
+        background: rgba(14, 165, 233, 0.2);
+        color: #0ea5e9;
+        border: 1px solid #0ea5e9;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-filter:hover {
+        background: rgba(14, 165, 233, 0.3);
+    }
+
+    .btn-reset {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .complaints-table {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow-x: auto;
+        margin-bottom: 30px;
+        border-collapse: collapse;
+    }
+
+    .complaints-table thead {
+        background: rgba(14, 165, 233, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .complaints-table th {
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 13px;
+        text-transform: uppercase;
+        color: #0ea5e9;
+        letter-spacing: 0.5px;
+    }
+
+    .complaints-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 14px;
+    }
+
+    .complaints-table tbody tr {
+        display: table-row;
+    }
+
+    .complaints-table tbody tr:hover {
+        background: rgba(14, 165, 233, 0.05);
+    }
+
+    /* Responsive Design */
+    @media screen and (max-width: 1024px) {
+        .complaints-page {
+            padding: 40px 20px;
+        }
+
+        .complaints-table th {
+            padding: 12px 10px;
+            font-size: 11px;
+        }
+
+        .complaints-table td {
+            padding: 10px 8px;
+            font-size: 12px;
+        }
+    }
+
+    @media screen and (max-width: 768px) {
+        .complaints-page {
+            margin-left: 0 !important;
+            width: 100% !important;
+            padding: 20px 15px !important;
+        }
+
+        .complaints-table {
+            font-size: 12px !important;
+            display: block !important;
+            border: none !important;
+            background: transparent !important;
+            overflow: visible !important;
+            width: 100% !important;
+        }
+
+        .complaints-table thead {
+            display: none !important;
+        }
+
+        .complaints-table tbody {
+            display: block !important;
+            width: 100% !important;
+        }
+
+        .complaints-table tbody tr {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 12px !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 8px !important;
+            padding: 12px !important;
+            margin-bottom: 15px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        .complaints-table td {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            gap: 10px !important;
+            padding: 0 !important;
+            border: none !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            margin: 0 !important;
+        }
+
+        .complaints-table td:before {
+            content: attr(data-label) !important;
+            font-weight: 600 !important;
+            color: #0ea5e9 !important;
+            font-size: 11px !important;
+            text-transform: uppercase !important;
+            min-width: 100px !important;
+            flex-shrink: 0 !important;
+        }
+    }
+
+    .customer-name {
+        font-weight: 600;
+        color: #0ea5e9;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-open {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .status-in_progress {
+        background: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .status-resolved {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status-closed {
+        background: rgba(107, 114, 128, 0.2);
+        color: #d1d5db;
+        border: 1px solid rgba(107, 114, 128, 0.3);
+    }
+
+    .status-pending {
+        background: rgba(251, 191, 36, 0.2);
+        color: #fbbf24;
+        border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .priority-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .priority-low {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .priority-medium {
+        background: rgba(251, 191, 36, 0.2);
+        color: #fbbf24;
+        border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .priority-high {
+        background: rgba(249, 115, 22, 0.2);
+        color: #f97316;
+        border: 1px solid rgba(249, 115, 22, 0.3);
+    }
+
+    .priority-critical {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-view {
+        background: rgba(14, 165, 233, 0.2);
+        color: #0ea5e9;
+        border: 1px solid #0ea5e9;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.2s;
+    }
+
+    .btn-view:hover {
+        background: rgba(14, 165, 233, 0.3);
+        transform: translateY(-1px);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        font-size: 20px;
+        margin-bottom: 10px;
+        color: white;
+    }
+
+    .quick-links {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 25px;
+    }
+
+    .quick-link {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 10px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .quick-link:hover {
+        background: rgba(14, 165, 233, 0.2);
+        border-color: #0ea5e9;
+        color: #0ea5e9;
+    }
+
+    .quick-link.active {
+        background: rgba(14, 165, 233, 0.3);
+        border-color: #0ea5e9;
+        color: #0ea5e9;
+    }
+</style>
+
+<div class="complaints-page">
+    <div class="page-header">
+        <div>
+            <h1>🎫 Support Complaints</h1>
+            <p style="color: rgba(255, 255, 255, 0.7); margin-top: 5px;">Track and manage customer support tickets</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'aquaguard:admin-create-complaint' %}" class="btn-create">➕ Create Complaint</a>
+            <a href="{% url 'aquaguard:admin-complaints-dashboard' %}" class="btn-primary">Dashboard</a>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+        <a href="?" class="stat-card">
+            <div class="stat-value">{{ total_complaints }}</div>
+            <div class="stat-label">Total</div>
+        </a>
+        <a href="?status=open" class="stat-card">
+            <div class="stat-value">{{ open_count }}</div>
+            <div class="stat-label">Open</div>
+        </a>
+        <a href="?status=in_progress" class="stat-card">
+            <div class="stat-value">{{ in_progress_count }}</div>
+            <div class="stat-label">In Progress</div>
+        </a>
+        <a href="?status=resolved" class="stat-card">
+            <div class="stat-value">{{ resolved_count }}</div>
+            <div class="stat-label">Resolved</div>
+        </a>
+        <a href="?status=closed" class="stat-card">
+            <div class="stat-value">{{ closed_count }}</div>
+            <div class="stat-label">Closed</div>
+        </a>
+        <a href="?overdue=1" class="stat-card">
+            <div class="stat-value">{{ overdue_count }}</div>
+            <div class="stat-label">Overdue</div>
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="filters-section">
+        <div class="filters-grid">
+            <div class="filter-group">
+                <label for="search">Search</label>
+                <input type="text" id="search" name="search" placeholder="Name, email, phone, device..." value="{{ request.GET.search }}">
+            </div>
+            <div class="filter-group">
+                <label for="status">Status</label>
+                <select id="status" name="status">
+                    <option value="">All Statuses</option>
+                    <option value="open" {% if request.GET.status == 'open' %}selected{% endif %}>Open</option>
+                    <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                    <option value="resolved" {% if request.GET.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                    <option value="closed" {% if request.GET.status == 'closed' %}selected{% endif %}>Closed</option>
+                    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="priority">Priority</label>
+                <select id="priority" name="priority">
+                    <option value="">All Priorities</option>
+                    <option value="low" {% if request.GET.priority == 'low' %}selected{% endif %}>Low</option>
+                    <option value="medium" {% if request.GET.priority == 'medium' %}selected{% endif %}>Medium</option>
+                    <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>High</option>
+                    <option value="critical" {% if request.GET.priority == 'critical' %}selected{% endif %}>Critical</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: flex-end;">
+                <button type="submit" class="btn-filter">Filter</button>
+                <a href="?", class="btn-reset">Reset</a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Complaints Table -->
+    {% if complaints %}
+        <table class="complaints-table">
+            <thead>
+                <tr>
+                    <th>Ticket #</th>
+                    <th>Customer</th>
+                    <th>Contact</th>
+                    <th>Device</th>
+                    <th>Problem</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Filed</th>
+                    <th>Assigned To</th>
+                    <th>Email</th>
+                    <th>Closing Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for complaint in complaints %}
+                    <tr>
+                        <td data-label="Ticket #">
+                            <span style="font-family: monospace; font-weight: 600; color: #0ea5e9;">{{ complaint.ticket_number }}</span>
+                        </td>
+                        <td data-label="Customer"><span class="customer-name">{{ complaint.customer.name }}</span></td>
+                        <td data-label="Contact">
+                            <div style="font-size: 12px;">{{ complaint.future_field1|default:complaint.customer.email }}</div>
+                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">{{ complaint.phone_no }}</div>
+                        </td>
+                        <td data-label="Device">
+                            <span style="font-family: monospace; font-size: 12px;">{{ complaint.device_id|default:complaint.customer.device_chip_id|default:"N/A" }}</span>
+                        </td>
+                        <td data-label="Problem" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                            {{ complaint.problem_statement|truncatewords:10 }}
+                        </td>
+                        <td data-label="Priority">
+                            <span class="priority-badge priority-{{ complaint.priority|lower }}">
+                                {{ complaint.get_priority_display }}
+                            </span>
+                        </td>
+                        <td data-label="Status">
+                            <span class="status-badge status-{{ complaint.status|lower }}">
+                                {{ complaint.get_status_display }}
+                            </span>
+                        </td>
+                        <td data-label="Filed" style="font-size: 12px;">
+                            {{ complaint.complain_date|date:"d M Y" }}
+                        </td>
+                        <td data-label="Assigned To">
+                            {% if complaint.assigned_person %}
+                                <div style="color: #0ea5e9;">
+                                    <strong>{{ complaint.assigned_person.name }}</strong>
+                                    {% if complaint.assigned_person.phone_number %}
+                                        <br><small style="color: rgba(14, 165, 233, 0.7);">📞 {{ complaint.assigned_person.phone_number }}</small>
+                                    {% endif %}
+                                    <br><small style="color: rgba(14, 165, 233, 0.7);">✉️ {{ complaint.assigned_person.email }}</small>
+                                </div>
+                            {% else %}
+                                <span style="color: rgba(255, 255, 255, 0.5);">Unassigned</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Future 1">{{ complaint.future_field1|default:"-" }}</td>
+                        <td data-label="Future 2">{{ complaint.future_field2|default:"-" }}</td>
+                       
+                        <td data-label="Actions">
+                            <a href="{% url 'aquaguard:admin-complaint-detail' complaint.id %}" class="btn-view">View</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">✨</div>
+            <h3>No Complaints Found</h3>
+            <p>Great! There are no complaints matching your filters</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

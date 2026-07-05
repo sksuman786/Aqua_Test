@@ -1,0 +1,754 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}Admin Dashboard - AquaGuard{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<!-- Add this message display block -->
+{% if messages %}
+<div class="messages-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}" style="
+        padding: 15px 20px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        background: {% if message.tags == 'success' %}linear-gradient(135deg, #10b981, #059669){% elif message.tags == 'error' %}linear-gradient(135deg, #ef4444, #dc2626){% else %}linear-gradient(135deg, #3b82f6, #2563eb){% endif %};
+        color: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        animation: slideIn 0.3s ease-out;
+    ">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+</style>
+
+<script>
+    // Auto-hide messages after 5 seconds
+    setTimeout(function() {
+        var container = document.querySelector('.messages-container');
+        if (container) {
+            container.style.transition = 'opacity 0.5s';
+            container.style.opacity = '0';
+            setTimeout(function() { container.remove(); }, 500);
+        }
+    }, 5000);
+</script>
+{% endif %}
+
+<style>
+    .admin-dashboard {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        color: white;
+        padding: 40px 30px;
+        min-height: 100vh;
+        margin-left: 0;
+        width: 100%;
+        border-radius: 0;
+    }
+    
+    .container {
+        max-width: 100%;
+        margin: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 40px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .dashboard-title {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .dashboard-title h1 {
+        font-size: 32px;
+        font-weight: 700;
+        color: white;
+        margin: 0;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .welcome-text {
+        text-align: right;
+    }
+
+    .welcome-text p {
+        margin: 0;
+        font-size: 14px;
+        color: #94a3b8;
+    }
+
+    .welcome-text strong {
+        color: #0ea5e9;
+        font-size: 16px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-bottom: 40px;
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    @media (max-width: 1024px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 30px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(14, 165, 233, 0.3);
+    }
+
+    .stat-card.active {
+        background: rgba(14, 165, 233, 0.3);
+        border: 2px solid #0ea5e9;
+        transform: translateY(-5px);
+    }
+
+    .stat-card h3 {
+        color: #0ea5e9;
+        font-size: 14px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+    }
+
+    .stat-card .number {
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .stat-card p {
+        font-size: 12px;
+        opacity: 0.8;
+    }
+
+    .section-title {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 30px;
+        margin-top: 40px;
+        color: white;
+    }
+
+    .customers-table {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+    }
+
+    .customers-table thead {
+        background: rgba(14, 165, 233, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .customers-table th {
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 13px;
+        text-transform: uppercase;
+        color: #0ea5e9;
+        letter-spacing: 0.5px;
+    }
+
+    .customers-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 14px;
+    }
+
+    .customers-table tbody tr:hover {
+        background: rgba(14, 165, 233, 0.05);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-online {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status-offline {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .recharge-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+
+    .recharge-green { background: #22c55e; }
+    .recharge-yellow { background: #eab308; }
+    .recharge-red { background: #ef4444; }
+
+    .action-link {
+        color: #0ea5e9;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s;
+    }
+
+    .action-link:hover {
+        color: #06b6d4;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 40px;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .dashboard-title h1 {
+        font-size: 32px;
+        margin: 0;
+        color: white;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .welcome-text {
+        text-align: right;
+    }
+
+    .welcome-text p {
+        margin: 0;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .welcome-text strong {
+        font-size: 16px;
+        color: #0ea5e9;
+    }
+
+    .btn-logout {
+        padding: 10px 20px;
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-logout:hover {
+        background: rgba(239, 68, 68, 0.3);
+        transform: translateY(-2px);
+    }
+</style>
+
+<div class="admin-dashboard">
+    <div class="container">
+        <!-- Dashboard Header with User Info -->
+        <div class="dashboard-header">
+            <div class="dashboard-title">
+                <h1>Admin Dashboard</h1>
+            </div>
+            <div class="user-info">
+                <div class="welcome-text">
+                    <p>Welcome back,</p>
+                    <strong>{{ user.username }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Section -->
+        <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 20px; margin-bottom: 30px;">
+            <h3 style="color: #22c55e; margin-top: 0; margin-bottom: 15px;">📥 Export Data</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+             
+                <a href="{% url 'aquaguard:export-customers-excel' %}" class="export-btn" style="background: #22c55e; color: #fff;">
+                    Export Customers (Excel)
+                </a>
+                <a href="{% url 'aquaguard:export-sensor-data-csv' %}" class="export-btn" style="background: #22c55e; color: #fff;">
+                    Export Sensor Data (Excel)
+                </a>
+                <a href="{% url 'aquaguard:export-water-usage-excel' %}" class="export-btn">
+                    Export Water Usage
+                </a>
+            </div>
+        </div>
+
+        <style>
+            .export-btn {
+                display: inline-block;
+                padding: 10px 20px;
+                background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 600;
+                text-decoration: none;
+                transition: all 0.2s;
+            }
+
+            .export-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 16px rgba(34, 197, 94, 0.3);
+            }
+        </style>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card" onclick="filterCustomers('all')" data-filter="all">
+                <h3>Total Customers</h3>
+                <div class="number">{{ total_customers }}</div>
+                <p>Registered users</p>
+            </div>
+            <div class="stat-card" onclick="filterCustomers('online')" data-filter="online">
+                <h3>Online Devices</h3>
+                <div class="number" style="color: #22c55e;">{{ online_devices }}</div>
+                <p>Active connections</p>
+            </div>
+            <div class="stat-card" onclick="filterCustomers('offline')" data-filter="offline">
+                <h3>Offline Devices</h3>
+                <div class="number" style="color: #ef4444;">{{ offline_devices }}</div>
+                <p>Inactive connections</p>
+            </div>
+            <div class="stat-card" onclick="filterCustomers('all')" data-filter="all">
+                <h3>Device Status</h3>
+                <div class="number">{{ online_devices|add:offline_devices }}</div>
+                <p>Total devices</p>
+            </div>
+        </div>
+
+        <!-- Customer Details Section -->
+        <div class="section-title" id="customerListTitle">Customer List <span id="filterStatus" style="font-size: 16px; color: #0ea5e9; font-weight: 400;"></span></div>
+        
+        <!-- Search Bar -->
+        <div style="margin-bottom: 30px;">
+            <form method="get" action="" style="display: flex; gap: 10px; max-width: 600px;">
+                <input type="text" name="search" placeholder="Search by customer name, email, phone, device ID or address..." 
+                       value="{{ search_query }}"
+                       style="flex: 1; padding: 12px 20px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); color: white; font-size: 14px;">
+                <button type="submit" style="padding: 12px 30px; background: #0ea5e9; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                    Search
+                </button>
+                {% if search_query %}
+                <a href="?" style="padding: 12px 20px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; border-radius: 8px; text-decoration: none; font-weight: 600; display: flex; align-items: center;">
+                    ✕ Clear
+                </a>
+                {% endif %}
+            </form>
+            {% if search_query %}
+            <p style="margin-top: 10px; color: #0ea5e9; font-size: 14px;">
+                Searching for: "{{ search_query }}" - {{ customers|length }} result{{ customers|length|pluralize }}
+            </p>
+            {% endif %}
+        </div>
+        
+        <div style="overflow-x: auto;">
+            <table class="customers-table" id="customersTable">
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Location</th>
+                        <th>Device ID</th>
+                        <th>Device Status</th>
+                        <th>Price per Litre (paisa)</th>
+                        <th>System Status</th>
+                        <th>Last Recharge</th>
+                        <th>Days Remaining</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in customers %}
+                    <tr data-device-status="{{ data.customer.device_status }}" style="{% if data.customer.is_out_of_date or data.litres_remaining == 0 %}background: rgba(239, 68, 68, 0.15);{% elif data.customer.days_remaining <= 7 or data.litres_remaining < 25 %}background: rgba(250, 204, 21, 0.15);{% endif %}">
+                        <td>{{ data.customer.name }}</td>
+                        <td>{{ data.customer.email }}</td>
+                        <td>{{ data.customer.phone_number }}</td>
+                        <td>{{ data.customer.location|default:"N/A" }}</td>
+                        <td><code style="background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; font-size: 11px;">{{ data.customer.device_chip_id|truncatechars:20 }}</code></td>
+                        <td>
+                            <span class="status-badge {% if data.customer.device_status == 'online' %}status-online{% else %}status-offline{% endif %}">
+                                {{ data.customer.device_status }}
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                {% if data.price_per_litre is not None %}
+                                    <span>{{ data.price_per_litre|floatformat:2 }}</span>
+                                {% else %}
+                                    <span style="color: #999;">N/A</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-badge {% if data.customer.block_unblock %}status-online{% else %}status-offline{% endif %}">
+                                {% if data.customer.block_unblock %}🟢 Active{% else %}🔴 Blocked{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if data.customer.last_recharge_date %}
+                                {{ data.customer.last_recharge_date|date:"M d, Y" }}
+                            {% elif data.active_recharge %}
+                                {{ data.active_recharge.recharge_date|date:"M d, Y" }}
+                            {% else %}
+                                <span style="color: #999;">No recharge</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if data.customer.is_out_of_date %}
+                                <span style="color: #ef4444; font-weight: 600;">Expired</span>
+                            {% else %}
+                                <span style="color: #22c55e;">{{ data.customer.days_remaining }} days</span>
+                            {% endif %}
+                            <div style="font-size: 11px; color: #888; margin-top: 2px;">
+                                Water: {% if data.litres_remaining < 25 %}<span style="color: #fbbf24; font-weight: 600;">{{ data.litres_remaining }}L</span>{% else %}{{ data.litres_remaining }}L{% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="recharge-color recharge-{{ data.customer.recharge_status_color }}"></span>
+                            {% if data.customer.recharge_status_color == 'red' %}Overdue
+                            {% elif data.customer.recharge_status_color == 'yellow' %}{{ data.customer.days_remaining }}days left
+                            {% else %}Active{% endif %}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <button onclick="toggleBlockUnblock('{{ data.customer.id }}', this)" 
+                                        data-toggle-url="{% url 'aquaguard:toggle-block' data.customer.id %}"
+                                        style="background: {% if data.customer.block_unblock %}#ef4444{% else %}#22c55e{% endif %}; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                        title="{% if data.customer.block_unblock %}Click to turn OFF the system{% else %}Click to turn ON the system{% endif %}">
+                                    {% if data.customer.block_unblock %}Turn OFF{% else %}Turn ON{% endif %}
+                                </button>
+                                <a href="{% url 'aquaguard:customer-details' data.customer.id %}" class="action-link" style="color: #0ea5e9; text-decoration: none;">View →</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="11" style="text-align: center; padding: 40px; opacity: 0.6;">
+                            No customers registered yet
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Quick Actions -->
+        <div style="margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <a href="{% url 'aquaguard:customer-list' %}" style="background: #0ea5e9; color: white; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; transition: all 0.3s;">
+                View All Customers
+            </a>
+            <!-- Moved 'Profile Edit Requests' to the sidebar navigation -->
+            <a href="{% url 'aquaguard:sensor-data' %}" style="background: rgba(14, 165, 233, 0.2); color: #0ea5e9; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; border: 1px solid #0ea5e9; transition: all 0.3s;">
+                Sensor Data Dashboard
+            </a>
+            <a href="{% url 'aquaguard:payment-history' %}" style="background: rgba(14, 165, 233, 0.2); color: #0ea5e9; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; border: 1px solid #0ea5e9; transition: all 0.3s;">
+                Payment History
+            </a>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+function filterCustomers(filterType) {
+    // Remove active class from all stat cards
+    document.querySelectorAll('.stat-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    
+    // Add active class to clicked card
+    const clickedCard = document.querySelector(`[data-filter="${filterType}"]`);
+    if (clickedCard) {
+        clickedCard.classList.add('active');
+    }
+    
+    // Get all customer rows
+    const rows = document.querySelectorAll('#customersTable tbody tr');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const deviceStatus = row.getAttribute('data-device-status');
+        
+        if (filterType === 'all') {
+            row.style.display = '';
+            visibleCount++;
+        } else if (filterType === 'online' && deviceStatus === 'online') {
+            row.style.display = '';
+            visibleCount++;
+        } else if (filterType === 'offline' && deviceStatus === 'offline') {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Update filter status display
+    const filterStatus = document.getElementById('filterStatus');
+    if (filterType === 'all') {
+        filterStatus.textContent = '(Showing all customers)';
+    } else if (filterType === 'online') {
+        filterStatus.textContent = `(Showing ${visibleCount} online devices)`;
+    } else if (filterType === 'offline') {
+        filterStatus.textContent = `(Showing ${visibleCount} offline devices)`;
+    }
+    
+    // Show "no results" message if no customers match filter
+    if (visibleCount === 0) {
+        const tbody = document.querySelector('#customersTable tbody');
+        const existingMsg = tbody.querySelector('.no-results-row');
+        if (!existingMsg) {
+            const noResultsRow = document.createElement('tr');
+            noResultsRow.className = 'no-results-row';
+            noResultsRow.innerHTML = `
+                <td colspan="11" style="text-align: center; padding: 40px; opacity: 0.6;">
+                    No customers found with ${filterType} devices
+                </td>
+            `;
+            tbody.appendChild(noResultsRow);
+        }
+    } else {
+        // Remove "no results" message if it exists
+        const noResultsRow = document.querySelector('.no-results-row');
+        if (noResultsRow) {
+            noResultsRow.remove();
+        }
+    }
+}
+
+function toggleBlockUnblock(customerId, button) {
+    console.log('=== TOGGLE BUTTON CLICKED ===');
+    console.log('Customer ID:', customerId);
+    console.log('Button element:', button);
+
+    // Show loading state
+    const originalText = button.innerText;
+    const originalBackground = button.style.background;
+    button.innerText = 'Processing...';
+    button.style.background = '#f59e0b'; // Orange loading color
+    button.disabled = true;
+
+    // Get the toggle URL
+    const toggleUrl = button.getAttribute('data-toggle-url') || `/customer/${customerId}/toggle-block/`;
+    console.log('Toggle URL:', toggleUrl);
+
+    // Get CSRF token
+    const csrfToken = getCookie('csrftoken');
+    console.log('CSRF Token available:', !!csrfToken, 'Value:', csrfToken ? csrfToken.substring(0, 10) + '...' : 'null');
+
+    if (!csrfToken) {
+        console.error('CSRF token not found!');
+        button.innerText = originalText;
+        button.style.background = originalBackground;
+        button.disabled = false;
+        showNotification('CSRF token missing. Please refresh the page.', 'error');
+        alert('CSRF token missing. Please refresh the page.');
+        return;
+    }
+
+    // Send POST request to toggle
+    console.log('Making fetch request...');
+    fetch(toggleUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({})
+    })
+    .then(async (response) => {
+        console.log('Response received. Status:', response.status);
+        console.log('Response headers:', response.headers);
+
+        const contentType = response.headers.get('content-type') || '';
+        console.log('Content-Type:', contentType);
+
+        // Check if this is a redirect (authentication failure)
+        if (response.status === 302 || response.status === 301) {
+            console.error('Redirect response - user not authenticated?');
+            const redirectUrl = response.headers.get('location');
+            console.log('Redirect URL:', redirectUrl);
+            throw new Error('Authentication required. Please refresh the page and log in again.');
+        }
+
+        if (!response.ok) {
+            const text = await response.text();
+            console.error('Response error text:', text);
+            throw new Error(text || ('Request failed: ' + response.status));
+        }
+        if (!contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Unexpected response type. Content:', text);
+            throw new Error('Unexpected response (not JSON): ' + text.slice(0, 60) + '...');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Parsed JSON response:', data);
+        if (data.success) {
+            console.log('Success! Showing notification...');
+            // Show success message
+            showNotification(data.message || 'System status updated successfully!', 'success');
+
+            // Also show browser alert as fallback
+            alert(data.message || 'System status updated successfully!');
+
+            // Update button appearance immediately for better UX
+            const isNowBlocked = data.block_unblock;
+            console.log('New block_unblock status:', isNowBlocked);
+            button.style.background = isNowBlocked ? '#ef4444' : '#22c55e';
+            button.innerText = isNowBlocked ? 'Turn OFF System' : 'Turn ON System';
+            button.title = isNowBlocked ? 'Click to turn OFF the system' : 'Click to turn ON the system';
+
+            // Reload the page after 2 seconds to show all updated data
+            console.log('Scheduling page reload in 2 seconds...');
+            setTimeout(() => {
+                console.log('Reloading page...');
+                location.reload();
+            }, 2000);
+        } else {
+            console.error('Backend returned success=false:', data);
+            button.innerText = originalText;
+            button.style.background = originalBackground;
+            button.disabled = false;
+            showNotification(data.message || 'Error toggling status', 'error');
+            alert('Error: ' + (data.message || 'Error toggling status'));
+        }
+    })
+    .catch(error => {
+        console.error('Fetch error:', error);
+        button.innerText = originalText;
+        button.style.background = originalBackground;
+        button.disabled = false;
+        showNotification('Error: ' + (error && error.message ? error.message : 'Unknown error occurred'), 'error');
+        alert('Error: ' + (error && error.message ? error.message : 'Unknown error occurred'));
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#22c55e' : '#ef4444'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        font-weight: 600;
+        animation: slideIn 0.3s ease-out;
+    `;
+    notification.innerText = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
+
+<style>
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+</style>
+{% endblock %}

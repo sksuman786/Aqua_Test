@@ -1,0 +1,418 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}Payment History - AquaGuard{% endblock %}
+
+{% block content %}
+<style>
+    .payment-page {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        color: white;
+        padding: 40px 30px;
+        min-height: 100vh;
+        margin-left: 0;
+        width: 100%;
+        border-radius: 0;
+    }
+
+    .container {
+        max-width: 100%;
+        margin: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        font-size: 32px;
+        margin-bottom: 10px;
+    }
+
+    .payment-table {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .payment-table thead {
+        background: rgba(14, 165, 233, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .payment-table th {
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 13px;
+        text-transform: uppercase;
+        color: #0ea5e9;
+        letter-spacing: 0.5px;
+    }
+
+    .payment-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 14px;
+    }
+
+    .payment-table tbody tr:hover {
+        background: rgba(14, 165, 233, 0.05);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-completed {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+    }
+
+    .status-pending {
+        background: rgba(250, 204, 21, 0.2);
+        color: #fef08a;
+    }
+
+    .status-failed {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+    }
+
+    .amount {
+        font-weight: 600;
+        color: #0ea5e9;
+    }
+
+    .back-link {
+        color: #0ea5e9;
+        text-decoration: none;
+        margin-bottom: 20px;
+        display: inline-block;
+        font-weight: 600;
+        transition: color 0.3s;
+    }
+
+    .back-link:hover {
+        color: #06b6d4;
+    }
+
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .summary-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .summary-card:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(14, 165, 233, 0.3);
+    }
+
+    .summary-card.active {
+        background: rgba(14, 165, 233, 0.3);
+        border: 2px solid #0ea5e9;
+        transform: translateY(-5px);
+    }
+
+    .summary-card h3 {
+        color: #0ea5e9;
+        font-size: 12px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        letter-spacing: 0.5px;
+    }
+
+    .summary-card .value {
+        font-size: 28px;
+        font-weight: 700;
+    }
+</style>
+
+<div class="payment-page">
+    <div class="container">
+        <a href="{% url 'aquaguard:admin-dashboard' %}" class="back-link">← Back to Dashboard</a>
+
+        <div class="page-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>Payment History</h1>
+                    <p style="opacity: 0.8;">All customer transactions and recharge payments</p>
+                </div>
+                <div id="refreshIndicator" style="background: rgba(14, 165, 233, 0.1); padding: 10px 16px; border-radius: 8px; border: 1px solid rgba(14, 165, 233, 0.3); font-size: 13px; color: #0ea5e9;">
+                    🔄 Auto-refresh: <span id="refreshTimer">30</span>s
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div style="margin-bottom: 30px;">
+            <form method="get" action="" style="display: flex; gap: 10px; max-width: 600px;">
+                <input type="text" name="search" placeholder="Search by customer name, email, phone or transaction ID..." 
+                       value="{{ search_query }}"
+                       style="flex: 1; padding: 12px 20px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); color: white; font-size: 14px;">
+                <button type="submit" style="padding: 12px 30px; background: #0ea5e9; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                    Search
+                </button>
+                {% if search_query %}
+                <a href="?" style="padding: 12px 20px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; border-radius: 8px; text-decoration: none; font-weight: 600; display: flex; align-items: center;">
+                    ✕ Clear
+                </a>
+                {% endif %}
+            </form>
+            {% if search_query %}
+            <p style="margin-top: 10px; color: #0ea5e9; font-size: 14px;">
+                Searching for: "{{ search_query }}" - {{ payments|length }} result{{ payments|length|pluralize }}
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card" onclick="filterPayments('all')" data-filter="all">
+                <h3>Total Payments</h3>
+                <div class="value">{{ payments|length }}</div>
+            </div>
+            <div class="summary-card" onclick="filterPayments('completed')" data-filter="completed">
+                <h3>Total Revenue</h3>
+                <div class="value" style="color: #22c55e;">
+                    ₹{{ total_revenue }}
+                </div>
+            </div>
+            <div class="summary-card" onclick="filterPayments('completed')" data-filter="completed">
+                <h3>Completed</h3>
+                <div class="value" style="color: #0ea5e9;">
+                    {{ completed_count }}
+                </div>
+            </div>
+            <div class="summary-card" onclick="filterPayments('pending')" data-filter="pending">
+                <h3>Pending</h3>
+                <div class="value" style="color: #eab308;">
+                    {{ pending_count }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Table -->
+        <div style="margin-bottom: 15px;">
+            <h2 style="font-size: 24px; font-weight: 600;">Payment Records <span id="filterStatus" style="font-size: 16px; color: #0ea5e9; font-weight: 400;"></span></h2>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="payment-table" id="paymentsTable">
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Device ID</th>
+                        <th>Order ID</th>
+                        <th>Amount</th>
+                        <th>Payment Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr data-payment-status="{{ payment.payment_status }}">
+                        <td style="font-weight: 600;">{{ payment.customer.name }}</td>
+                        <td>{{ payment.customer.email }}</td>
+                        <td>{{ payment.customer.phone_number }}</td>
+                        <td><code style="background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; font-size: 11px;">{{ payment.customer.device_chip_id|truncatechars:20 }}</code></td>
+                        <td><code style="background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; font-size: 11px;">{{ payment.order_id }}</code></td>
+                        <td><span class="amount">₹{{ payment.amount }}</span></td>
+                        <td>{{ payment.recharge_date|date:"M d, Y H:i" }}</td>
+                        <td>
+                            <span class="status-badge status-{{ payment.payment_status }}">
+                                {{ payment.payment_status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px; opacity: 0.6;">
+                            No payment records found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Quick Actions -->
+        <div style="margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <a href="{% url 'aquaguard:customer-list' %}" style="background: rgba(14, 165, 233, 0.2); color: #0ea5e9; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; border: 1px solid #0ea5e9; transition: all 0.3s;">
+                View All Customers
+            </a>
+            <a href="{% url 'aquaguard:sensor-data' %}" style="background: rgba(14, 165, 233, 0.2); color: #0ea5e9; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; border: 1px solid #0ea5e9; transition: all 0.3s;">
+                Sensor Data Dashboard
+            </a>
+            <a href="{% url 'aquaguard:payment-history' %}" style="background: #0ea5e9; color: white; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; transition: all 0.3s;">
+                Payment History
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterPayments(filterType) {
+    // Remove active class from all summary cards
+    document.querySelectorAll('.summary-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    
+    // Add active class to clicked card
+    const clickedCards = document.querySelectorAll(`[data-filter="${filterType}"]`);
+    clickedCards.forEach(card => card.classList.add('active'));
+    
+    // Get all payment rows
+    const rows = document.querySelectorAll('#paymentsTable tbody tr:not(.no-results-row)');
+    let visibleCount = 0;
+    let totalAmount = 0;
+    
+    rows.forEach(row => {
+        const paymentStatus = row.getAttribute('data-payment-status');
+        
+        if (filterType === 'all') {
+            row.style.display = '';
+            visibleCount++;
+        } else if (filterType === 'completed' && paymentStatus === 'completed') {
+            row.style.display = '';
+            visibleCount++;
+        } else if (filterType === 'pending' && paymentStatus === 'pending') {
+            row.style.display = '';
+            visibleCount++;
+        } else if (filterType === 'failed' && paymentStatus === 'failed') {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Update filter status display
+    const filterStatus = document.getElementById('filterStatus');
+    if (filterType === 'all') {
+        filterStatus.textContent = '(Showing all payments)';
+    } else if (filterType === 'completed') {
+        filterStatus.textContent = `(Showing ${visibleCount} completed payments)`;
+    } else if (filterType === 'pending') {
+        filterStatus.textContent = `(Showing ${visibleCount} pending payments)`;
+    } else if (filterType === 'failed') {
+        filterStatus.textContent = `(Showing ${visibleCount} failed payments)`;
+    }
+    
+    // Show "no results" message if no payments match filter
+    const existingNoResults = document.querySelector('.no-results-row');
+    if (existingNoResults) {
+        existingNoResults.remove();
+    }
+    
+    if (visibleCount === 0) {
+        const tbody = document.querySelector('#paymentsTable tbody');
+        const noResultsRow = document.createElement('tr');
+        noResultsRow.className = 'no-results-row';
+        noResultsRow.innerHTML = `
+            <td colspan="8" style="text-align: center; padding: 40px; opacity: 0.6;">
+                No ${filterType === 'all' ? '' : filterType} payments found
+            </td>
+        `;
+        tbody.appendChild(noResultsRow);
+    }
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#22c55e' : '#ef4444'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        font-weight: 600;
+        animation: slideIn 0.3s ease-out;
+    `;
+    notification.innerText = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Auto-refresh functionality
+let refreshInterval = 30; // seconds
+let countdown = refreshInterval;
+
+function updateRefreshTimer() {
+    const timerElement = document.getElementById('refreshTimer');
+    if (timerElement) {
+        timerElement.textContent = countdown;
+        countdown--;
+        
+        if (countdown < 0) {
+            refreshPage();
+            countdown = refreshInterval;
+        }
+    }
+}
+
+function refreshPage() {
+    const indicator = document.getElementById('refreshIndicator');
+    indicator.classList.add('refreshing');
+    indicator.innerHTML = '🔄 Refreshing...';
+    indicator.style.animation = 'pulse 0.5s ease-in-out';
+    
+    showNotification('Refreshing payment data...', 'success');
+    setTimeout(() => location.reload(), 1000);
+}
+
+// Start auto-refresh timer
+setInterval(updateRefreshTimer, 1000);
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    .refreshing {
+        animation: pulse 0.5s ease-in-out infinite;
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

@@ -1,0 +1,1036 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}AquaGuard - Real-Time Water Quality Monitoring{% endblock %}
+
+{% block content %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: #ffffff;
+    }
+
+    /* Hero Section */
+    .hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0ea5e9 100%);
+        color: white;
+        padding: 100px 20px;
+        border-radius: 0;
+        margin-bottom: 0;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 20% 50%, rgba(14, 165, 233, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(30, 41, 59, 0.2) 0%, transparent 50%);
+        pointer-events: none;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .hero-badge {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        color: #0ea5e9;
+        padding: 8px 20px;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        letter-spacing: 0.5px;
+    }
+
+    .hero h1 {
+        font-size: 56px;
+        margin-bottom: 20px;
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: -1px;
+    }
+
+    .hero p {
+        font-size: 18px;
+        margin-bottom: 40px;
+        opacity: 0.9;
+        line-height: 1.6;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .hero-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary {
+        background: #0ea5e9;
+        color: white;
+        padding: 14px 32px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 15px;
+        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+    }
+
+    .btn-primary:hover {
+        background: #0284c7;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(14, 165, 233, 0.4);
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 14px 32px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        font-size: 15px;
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+    }
+
+    /* Section Styling */
+    .section {
+        padding: 80px 20px;
+    }
+
+    .section-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .section h2 {
+        font-size: 42px;
+        color: #0f172a;
+        margin-bottom: 15px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    .section-subtitle {
+        font-size: 18px;
+        color: #64748b;
+        margin-bottom: 50px;
+        max-width: 600px;
+        line-height: 1.6;
+    }
+
+    /* Features Grid */
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 30px;
+        margin-top: 50px;
+    }
+
+    .feature-card {
+        background: #f8fafc;
+        padding: 40px 30px;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+    }
+
+    .feature-card:hover {
+        border-color: #0ea5e9;
+        box-shadow: 0 12px 24px rgba(14, 165, 233, 0.1);
+        transform: translateY(-5px);
+    }
+
+    .feature-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .feature-icon {
+        font-size: 40px;
+        margin-bottom: 15px;
+    }
+
+    .feature-card h3 {
+        font-size: 18px;
+        color: #0f172a;
+        margin-bottom: 12px;
+        font-weight: 600;
+    }
+
+    .feature-card p {
+        color: #64748b;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    /* Stats Section */
+    .stats-section {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 60px 40px;
+        margin-top: 80px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 40px;
+        text-align: center;
+    }
+
+    .stat-item h3 {
+        font-size: 32px;
+        font-weight: 700;
+        color: #0ea5e9;
+        margin-bottom: 8px;
+    }
+
+    .stat-item p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 14px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    /* Pricing Section */
+    .pricing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px;
+        margin-top: 50px;
+    }
+
+    .pricing-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 40px 30px;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .pricing-card.featured {
+        border: 2px solid #0ea5e9;
+        transform: scale(1.05);
+        box-shadow: 0 20px 40px rgba(14, 165, 233, 0.15);
+    }
+
+    .pricing-badge {
+        position: absolute;
+        top: -12px;
+        left: 20px;
+        background: #0ea5e9;
+        color: white;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .pricing-card:hover {
+        border-color: #0ea5e9;
+        box-shadow: 0 12px 24px rgba(14, 165, 233, 0.1);
+        transform: translateY(-5px);
+    }
+
+    .pricing-card.featured:hover {
+        transform: scale(1.05) translateY(-5px);
+    }
+
+    .pricing-card h3 {
+        color: #0f172a;
+        margin: 15px 0 10px 0;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .pricing-price {
+        font-size: 36px;
+        color: #0ea5e9;
+        font-weight: 700;
+        margin: 20px 0;
+    }
+
+    .pricing-period {
+        color: #64748b;
+        font-size: 14px;
+        margin-bottom: 30px;
+    }
+
+    .pricing-features {
+        list-style: none;
+        margin: 30px 0;
+    }
+
+    .pricing-features li {
+        padding: 10px 0;
+        color: #64748b;
+        font-size: 14px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+    }
+
+    .pricing-features li:before {
+        content: '✓';
+        color: #0ea5e9;
+        font-weight: bold;
+        margin-right: 10px;
+        font-size: 16px;
+    }
+
+    .pricing-features li:last-child {
+        border-bottom: none;
+    }
+
+    /* Comparison Section */
+    .comparison-table {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        margin-top: 40px;
+    }
+
+    .comparison-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .comparison-row:last-child {
+        border-bottom: none;
+    }
+
+    .comparison-cell {
+        padding: 20px;
+        font-size: 14px;
+    }
+
+    .comparison-cell:nth-child(1) {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .comparison-cell:nth-child(2) {
+        background: linear-gradient(135deg, rgba(14, 165, 233, 0.05), transparent);
+        color: #0ea5e9;
+        font-weight: 600;
+    }
+
+    .comparison-cell:nth-child(3) {
+        color: #64748b;
+    }
+
+    /* Testimonials */
+    .testimonials-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-top: 50px;
+    }
+
+    .testimonial-card {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+    }
+
+    .testimonial-card:hover {
+        border-color: #0ea5e9;
+        box-shadow: 0 12px 24px rgba(14, 165, 233, 0.1);
+        transform: translateY(-5px);
+    }
+
+    .testimonial-stars {
+        color: #fbbf24;
+        font-size: 14px;
+        margin-bottom: 15px;
+        letter-spacing: 2px;
+    }
+
+    .testimonial-text {
+        color: #475569;
+        font-size: 14px;
+        line-height: 1.7;
+        margin-bottom: 20px;
+        font-style: italic;
+    }
+
+    .testimonial-author {
+        font-weight: 600;
+        color: #0f172a;
+        font-size: 14px;
+    }
+
+    .testimonial-role {
+        color: #0ea5e9;
+        font-size: 12px;
+    }
+
+    /* CTA Section */
+    .cta-section {
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+        border-radius: 16px;
+        padding: 60px 40px;
+        text-align: center;
+        color: white;
+        margin-top: 80px;
+    }
+
+    .cta-section h2 {
+        color: white;
+        font-size: 40px;
+        margin-bottom: 15px;
+    }
+
+    .cta-section p {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 18px;
+        margin-bottom: 30px;
+    }
+
+    /* How It Works */
+    .steps-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 25px;
+        margin-top: 50px;
+    }
+
+    .step-card {
+        text-align: center;
+        padding: 30px 20px;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .step-number {
+        width: 50px;
+        height: 50px;
+        background: #0ea5e9;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 20px;
+        margin: 0 auto 20px;
+    }
+
+    .step-card h4 {
+        color: #0f172a;
+        font-size: 16px;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .step-card p {
+        color: #64748b;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    /* FAQ */
+    .faq-container {
+        max-width: 700px;
+        margin-top: 50px;
+    }
+
+    .faq-item {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .faq-item:hover {
+        border-color: #0ea5e9;
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.08);
+    }
+
+    .faq-question {
+        padding: 20px;
+        background: #f8fafc;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+        color: #0f172a;
+        font-size: 15px;
+        user-select: none;
+    }
+
+    .faq-question:hover {
+        background: #f1f5f9;
+    }
+
+    .faq-arrow {
+        color: #0ea5e9;
+        font-size: 20px;
+        transition: transform 0.3s ease;
+    }
+
+    .faq-item.active .faq-arrow {
+        transform: rotate(180deg);
+    }
+
+    .faq-answer {
+        padding: 20px;
+        color: #64748b;
+        font-size: 14px;
+        line-height: 1.7;
+        display: none;
+        border-top: 1px solid #e2e8f0;
+        background: #ffffff;
+    }
+
+    .faq-item.active .faq-answer {
+        display: block;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 36px;
+        }
+
+        .section h2 {
+            font-size: 28px;
+        }
+
+        .pricing-card.featured {
+            transform: scale(1);
+        }
+
+        .pricing-card.featured:hover {
+            transform: translateY(-5px);
+        }
+
+        .comparison-row {
+            grid-template-columns: 1fr;
+        }
+
+        .comparison-cell:nth-child(1) {
+            font-weight: 600;
+        }
+
+        .hero-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .btn-primary, .btn-secondary {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+</style>
+
+<!-- Hero Section -->
+<div class="hero">
+    <div class="hero-content">
+        <div class="hero-badge">🌊 Real-Time Water Monitoring</div>
+        <h1>Monitor Water Quality Instantly</h1>
+        <p>Advanced IoT sensors provide accurate, real-time water quality data. Protect your water sources with intelligent alerts and comprehensive analytics.</p>
+        <div class="hero-buttons">
+            <a href="{% url 'aquaguard:dashboard' %}" class="btn-primary">View Dashboard</a>
+            <a href="#features" class="btn-secondary">Learn More</a>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="section" id="features">
+    <div class="section-inner">
+        <h2>Why Choose AquaGuard?</h2>
+        <p class="section-subtitle">Everything you need for comprehensive water quality monitoring in one platform</p>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon"></div>
+                <h3>Real-Time Monitoring</h3>
+                <p>Get instant data on pH, temperature, turbidity, and 10+ other water quality parameters</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"></div>
+                <h3>Smart Alerts</h3>
+                <p>Receive instant notifications when water quality exceeds safe thresholds</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"></div>
+                <h3>Contaminant Detection</h3>
+                <p>Automatically identify bacterial, chemical, and heavy metal contamination</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"></div>
+                <h3>Historical Analytics</h3>
+                <p>Track trends over time with detailed reports and predictive insights</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"></div>
+                <h3>Enterprise Security</h3>
+                <p>Bank-level encryption and compliance with water quality standards</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"></div>
+                <h3>AI-Powered Insights</h3>
+                <p>Machine learning models predict water quality issues before they occur</p>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-section">
+            <div class="stat-item">
+                <h3>{{ total_sources }}</h3>
+                <p>Water Sources Monitored</p>
+            </div>
+            <div class="stat-item">
+                <h3>{{ total_readings }}</h3>
+                <p>Readings Recorded</p>
+            </div>
+            <div class="stat-item">
+                <h3>{{ total_alerts }}</h3>
+                <p>Alerts Generated</p>
+            </div>
+            <div class="stat-item">
+                <h3>99.5%</h3>
+                <p>Sensor Accuracy</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pricing Section -->
+<div class="section" style="background: #f8fafc;">
+    <div class="section-inner">
+        <h2>Simple, Transparent Pricing</h2>
+        <p class="section-subtitle">Choose the perfect plan for your water monitoring needs</p>
+        
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h3>Starter</h3>
+                <div class="pricing-price">₹2,999<span style="font-size: 16px; color: #64748b;">/mo</span></div>
+                <p class="pricing-period">Perfect for single locations</p>
+                <ul class="pricing-features">
+                    <li>1 Water Source</li>
+                    <li>Daily Readings</li>
+                    <li>Email Reports</li>
+                    <li>Basic Alerts</li>
+                    <li>90-day History</li>
+                </ul>
+                <a href="#" class="btn-primary" style="width: 100%; text-align: center;">Get Started</a>
+            </div>
+
+            <div class="pricing-card featured">
+                <div class="pricing-badge">Most Popular</div>
+                <h3>Professional</h3>
+                <div class="pricing-price">₹5,999<span style="font-size: 16px; color: #64748b;">/mo</span></div>
+                <p class="pricing-period">For serious monitoring</p>
+                <ul class="pricing-features">
+                    <li>Up to 5 Water Sources</li>
+                    <li>Hourly Readings</li>
+                    <li>Advanced Analytics</li>
+                    <li>Smart Alerts</li>
+                    <li>Unlimited History</li>
+                    <li>API Access</li>
+                </ul>
+                <a href="#" class="btn-primary" style="width: 100%; text-align: center;">Get Started</a>
+            </div>
+
+            <div class="pricing-card">
+                <h3>Enterprise</h3>
+                <div class="pricing-price">Custom<span style="font-size: 16px; color: #64748b;"></span></div>
+                <p class="pricing-period">For large-scale operations</p>
+                <ul class="pricing-features">
+                    <li>Unlimited Sources</li>
+                    <li>Real-time Monitoring</li>
+                    <li>Custom Alerts</li>
+                    <li>Dedicated Support</li>
+                    <li>Custom Integration</li>
+                </ul>
+                <a href="#" class="btn-primary" style="width: 100%; text-align: center;">Contact Sales</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Comparison Section -->
+<div class="section">
+    <div class="section-inner">
+        <h2>AquaGuard vs Traditional Testing</h2>
+        <p class="section-subtitle">See how we compare to conventional water quality testing</p>
+        
+        <div class="comparison-table">
+            <div class="comparison-row">
+                <div class="comparison-cell">Feature</div>
+                <div class="comparison-cell">AquaGuard</div>
+                <div class="comparison-cell">Traditional Labs</div>
+            </div>
+            <div class="comparison-row">
+                <div class="comparison-cell">Real-time Data</div>
+                <div class="comparison-cell">✓ 24/7 Monitoring</div>
+                <div class="comparison-cell">✗ Weekly/Monthly</div>
+            </div>
+            <div class="comparison-row">
+                <div class="comparison-cell">Cost per Test</div>
+                <div class="comparison-cell">₹99</div>
+                <div class="comparison-cell">₹500-2000</div>
+            </div>
+            <div class="comparison-row">
+                <div class="comparison-cell">Installation Time</div>
+                <div class="comparison-cell">2-4 hours</div>
+                <div class="comparison-cell">N/A</div>
+            </div>
+            <div class="comparison-row">
+                <div class="comparison-cell">Alert System</div>
+                <div class="comparison-cell">✓ Instant Alerts</div>
+                <div class="comparison-cell">✗ Manual Checking</div>
+            </div>
+            <div class="comparison-row">
+                <div class="comparison-cell">Data Analytics</div>
+                <div class="comparison-cell">✓ AI-Powered</div>
+                <div class="comparison-cell">✗ Basic Reports</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works -->
+<div class="section" style="background: #f8fafc;">
+    <div class="section-inner">
+        <h2>Getting Started in 4 Steps</h2>
+        <p class="section-subtitle">Simple setup process to start monitoring your water quality</p>
+        
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <h4>Register Source</h4>
+                <p>Add your water location with coordinates and details</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h4>Install Sensors</h4>
+                <p>Deploy IoT sensors for continuous monitoring</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h4>Monitor Data</h4>
+                <p>View real-time readings and historical trends</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">4</div>
+                <h4>Get Alerts</h4>
+                <p>Receive instant notifications for anomalies</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Testimonials -->
+<div class="section">
+    <div class="section-inner">
+        <h2>Trusted by Water Experts</h2>
+        <p class="section-subtitle">See what industry leaders have to say about AquaGuard</p>
+        
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <div class="testimonial-stars">★★★★★</div>
+                <p class="testimonial-text">"AquaGuard's real-time monitoring prevented a major contamination incident at our facility. It's now essential to our operations."</p>
+                <div class="testimonial-author">Dr. Rajesh Kumar</div>
+                <div class="testimonial-role">Environmental Scientist</div>
+            </div>
+
+            <div class="testimonial-card">
+                <div class="testimonial-stars">★★★★★</div>
+                <p class="testimonial-text">"The accuracy is impressive. We've reduced our lab testing costs by 70% while monitoring more frequently. Incredible ROI."</p>
+                <div class="testimonial-author">Priya Sharma</div>
+                <div class="testimonial-role">Water Quality Manager</div>
+            </div>
+
+            <div class="testimonial-card">
+                <div class="testimonial-stars">★★★★★</div>
+                <p class="testimonial-text">"Best investment we made for water monitoring. The support team is excellent and the interface is very intuitive."</p>
+                <div class="testimonial-author">Amit Patel</div>
+                <div class="testimonial-role">Municipal Authority Director</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FAQ -->
+<div class="section" style="background: #f8fafc;">
+    <div class="section-inner">
+        <h2>Frequently Asked Questions</h2>
+        <p class="section-subtitle">Everything you need to know about AquaGuard</p>
+        
+        <div class="faq-container">
+            <div class="faq-item">
+                <div class="faq-question" onclick="this.parentElement.classList.toggle('active')">
+                    <span>How accurate are the sensor readings?</span>
+                    <span class="faq-arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    AquaGuard uses calibrated IoT sensors with 99.5% accuracy. All readings are validated against certified lab standards. Sensors are automatically calibrated monthly to ensure precision.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="this.parentElement.classList.toggle('active')">
+                    <span>What water parameters are monitored?</span>
+                    <span class="faq-arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    We monitor 15+ parameters including pH, temperature, turbidity, conductivity, dissolved oxygen, chlorine, nitrate, phosphate, and can detect bacterial and chemical contaminants. Custom parameters are available for enterprise plans.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="this.parentElement.classList.toggle('active')">
+                    <span>How quickly can I get set up?</span>
+                    <span class="faq-arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Basic setup takes 2-4 hours. Our technical team handles installation and calibration. You can start receiving data within 24 hours of installation. Express setup is available for an additional fee.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="this.parentElement.classList.toggle('active')">
+                    <span>Is there API access for integration?</span>
+                    <span class="faq-arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Yes! Professional and Enterprise plans include REST API access. We provide webhooks for real-time data integration with your existing systems. Full API documentation is available.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="this.parentElement.classList.toggle('active')">
+                    <span>Do you offer a free trial?</span>
+                    <span class="faq-arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Yes! We offer a 14-day free trial with full access to Professional features. No credit card required, and you can cancel anytime. Setup is included at no cost.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Final CTA -->
+<div class="section">
+    <div class="section-inner">
+        <div class="cta-section">
+            <h2>Start Monitoring Today</h2>
+            <p>Join water quality experts across India using AquaGuard</p>
+            <a href="{% url 'aquaguard:dashboard' %}" class="btn-secondary">Start Free Trial</a>
+        </div>
+    </div>
+</div>
+
+<!-- Who We Are Section -->
+<div class="section" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white;">
+    <div class="section-inner">
+        <div style="text-align: center; max-width: 800px; margin: 0 auto;">
+            <h2 style="color: white; margin-bottom: 20px;">Who We Are</h2>
+            <p style="font-size: 16px; line-height: 1.8; color: rgba(255,255,255,0.9); margin-bottom: 30px;">
+                AquaGuard is a team of environmental engineers, software developers, and water quality experts dedicated to making water monitoring accessible and affordable for everyone. Since 2020, we've been helping communities, industries, and governments ensure safe, clean water.
+            </p>
+            <p style="font-size: 16px; line-height: 1.8; color: rgba(255,255,255,0.9);">
+                Our mission is simple: <strong>Real-time water quality monitoring for a healthier future</strong>. We believe that clean water is a fundamental right, and technology should empower communities to protect it.
+            </p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; margin-top: 50px;">
+            <div style="text-align: center;">
+                <div style="font-size: 40px; margin-bottom: 10px;">🎯</div>
+                <h4 style="color: #0ea5e9; margin-bottom: 10px;">Our Vision</h4>
+                <p style="color: rgba(255,255,255,0.8);">Every water source monitored, every community protected</p>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 40px; margin-bottom: 10px;">💡</div>
+                <h4 style="color: #0ea5e9; margin-bottom: 10px;">Our Values</h4>
+                <p style="color: rgba(255,255,255,0.8);">Accuracy, Accessibility, Accountability, Innovation</p>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 40px; margin-bottom: 10px;">🌍</div>
+                <h4 style="color: #0ea5e9; margin-bottom: 10px;">Our Impact</h4>
+                <p style="color: rgba(255,255,255,0.8);">50,000+ devices monitoring 500M+ liters daily</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- About Section -->
+<div class="section">
+    <div class="section-inner">
+        <h2 style="text-align: center; margin-bottom: 50px;">About AquaGuard</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;">
+            <div>
+                <h3 style="color: #0f172a; margin-bottom: 15px; font-size: 24px;">Trusted by Thousands</h3>
+                <p style="color: #555; line-height: 1.8; margin-bottom: 20px;">
+                    Founded in 2020, AquaGuard has emerged as India's leading water quality monitoring platform. Our IoT sensors and cloud platform work together to provide real-time insights that matter.
+                </p>
+                <ul style="color: #555; line-height: 2; margin-bottom: 20px;">
+                    <li>✓ ISO 9001:2015 Certified</li>
+                    <li>✓ NABET Accredited Testing</li>
+                    <li>✓ 24/7 Customer Support</li>
+                    <li>✓ Military-Grade Security</li>
+                    <li>✓ 99.9% Uptime Guarantee</li>
+                </ul>
+                <p style="color: #666; font-size: 14px;">
+                    "AquaGuard's real-time monitoring helped us reduce contamination incidents by 87% in just 6 months." - Municipal Water Board, Bangalore
+                </p>
+            </div>
+            <div style="background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%); padding: 40px; border-radius: 12px; color: white; text-align: center;">
+                <div style="margin-bottom: 30px;">
+                    <div style="font-size: 42px; font-weight: 700; margin-bottom: 10px;">{{ total_sources|default:1500 }}+</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Active Monitoring Points</div>
+                </div>
+                <div style="margin-bottom: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+                    <div style="font-size: 42px; font-weight: 700; margin-bottom: 10px;">{{ total_readings|default:50000 }}+</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Real-time Readings</div>
+                </div>
+                <div style="padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+                    <div style="font-size: 42px; font-weight: 700; margin-bottom: 10px;">99.9%</div>
+                    <div style="font-size: 14px; opacity: 0.9;">System Uptime</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Section -->
+<div class="section" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white;">
+    <div class="section-inner">
+        <h2 style="color: white; text-align: center; margin-bottom: 50px;">Get In Touch</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 50px;">
+            <!-- Contact Methods -->
+            <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 32px; margin-bottom: 15px;">📧</div>
+                <h3 style="color: #0ea5e9; margin-bottom: 10px;">Email</h3>
+                <p style="color: rgba(255,255,255,0.8); margin-bottom: 5px;">support@aquaguard.io</p>
+                <p style="color: rgba(255,255,255,0.8); margin-bottom: 5px;">sales@aquaguard.io</p>
+                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Response time: 2 hours</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 32px; margin-bottom: 15px;">📞</div>
+                <h3 style="color: #0ea5e9; margin-bottom: 10px;">Phone</h3>
+                <p style="color: rgba(255,255,255,0.8); margin-bottom: 5px;">+91-1800-AQUAGUARD</p>
+                <p style="color: rgba(255,255,255,0.8); margin-bottom: 5px;">+91-98XXX-XXXXX</p>
+                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Mon-Fri, 9am-6pm IST</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 32px; margin-bottom: 15px;">📍</div>
+                <h3 style="color: #0ea5e9; margin-bottom: 10px;">Office</h3>
+                <p style="color: rgba(255,255,255,0.8); margin-bottom: 5px;">Bangalore, India</p>
+                <p style="color: rgba(255,255,255,0.8); margin-bottom: 5px;">New Delhi, India</p>
+                <p style="color: rgba(255,255,255,0.6); font-size: 12px;">Multiple locations</p>
+            </div>
+        </div>
+
+        <!-- Contact Form -->
+        <div style="max-width: 600px; margin: 0 auto; background: rgba(255,255,255,0.05); padding: 40px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+            <h3 style="color: white; margin-bottom: 25px; text-align: center;">Send us a Message</h3>
+            <form style="display: grid; gap: 15px;">
+                <input type="text" placeholder="Your Name" style="padding: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); border-radius: 8px; color: white; font-size: 14px;" required>
+                <input type="email" placeholder="Your Email" style="padding: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); border-radius: 8px; color: white; font-size: 14px;" required>
+                <select style="padding: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); border-radius: 8px; color: white; font-size: 14px;">
+                    <option style="color: #000;">Select Subject</option>
+                    <option style="color: #000;">General Inquiry</option>
+                    <option style="color: #000;">Sales</option>
+                    <option style="color: #000;">Support</option>
+                    <option style="color: #000;">Partnership</option>
+                </select>
+                <textarea placeholder="Your Message" rows="5" style="padding: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); border-radius: 8px; color: white; font-size: 14px; font-family: inherit;" required></textarea>
+                <button type="submit" style="background: #0ea5e9; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                    Send Message
+                </button>
+            </form>
+        </div>
+
+        <!-- Social Links -->
+        <div style="text-align: center; margin-top: 40px;">
+            <p style="color: rgba(255,255,255,0.7); margin-bottom: 15px;">Follow us on social media</p>
+            <div style="display: flex; justify-content: center; gap: 20px;">
+                <a href="#" style="color: #0ea5e9; font-size: 24px; text-decoration: none;">f</a>
+                <a href="#" style="color: #0ea5e9; font-size: 24px; text-decoration: none;">𝕏</a>
+                <a href="#" style="color: #0ea5e9; font-size: 24px; text-decoration: none;">in</a>
+                <a href="#" style="color: #0ea5e9; font-size: 24px; text-decoration: none;">📷</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+</script>
+
+{% endblock %}

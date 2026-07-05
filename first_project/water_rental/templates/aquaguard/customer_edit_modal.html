@@ -1,0 +1,189 @@
+<!-- Modal for editing customer fields -->
+
+<style>
+  #editCustomerModal.modal {
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .edit-modal-content {
+    background: #232946;
+    color: #fff;
+    padding: 36px 30px 28px 30px;
+    border-radius: 16px;
+    min-width: 340px;
+    max-width: 95vw;
+    position: relative;
+    box-shadow: 0 8px 32px rgba(14,165,233,0.18);
+    border: 1.5px solid #0ea5e9;
+    animation: modalIn 0.18s cubic-bezier(.4,2,.6,1) 1;
+  }
+  @keyframes modalIn {
+    from { transform: translateY(-30px) scale(0.98); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+  .edit-modal-content h2 {
+    margin-bottom: 18px;
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.5px;
+    border-bottom: 1.5px solid #0ea5e9;
+    padding-bottom: 10px;
+  }
+  .edit-modal-content .close-btn {
+    position: absolute;
+    top: 14px; right: 18px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 26px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  .edit-modal-content .close-btn:hover {
+    opacity: 1;
+  }
+  .edit-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 10px;
+  }
+  .edit-modal-form label {
+    color: #0ea5e9;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    letter-spacing: 0.2px;
+  }
+  .edit-modal-form input[type="text"],
+  .edit-modal-form input[type="number"],
+  .edit-modal-form select {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1.5px solid #334155;
+    background: #181c2f;
+    color: #fff;
+    font-size: 15px;
+    font-family: inherit;
+    transition: border 0.2s, box-shadow 0.2s;
+    outline: none;
+    margin-bottom: 2px;
+  }
+  .edit-modal-form input:focus {
+    border: 1.5px solid #0ea5e9;
+    box-shadow: 0 0 0 2px rgba(14,165,233,0.13);
+  }
+  .edit-modal-form button[type="submit"] {
+    margin-top: 10px;
+    background: linear-gradient(90deg, #0ea5e9 60%, #38bdf8 100%);
+    color: #fff;
+    border: none;
+    padding: 12px 0;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(14,165,233,0.10);
+    letter-spacing: 0.5px;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+  .edit-modal-form button[type="submit"]:hover {
+    background: linear-gradient(90deg, #38bdf8 0%, #0ea5e9 100%);
+    box-shadow: 0 4px 16px rgba(14,165,233,0.18);
+  }
+</style>
+
+<div id="editCustomerModal" class="modal" style="display: {% if form and form.errors %}flex{% else %}none{% endif %};">
+  <div class="edit-modal-content">
+    <button onclick="closeEditCustomerModal()" class="close-btn" title="Close">&times;</button>
+    <h2>Edit Customer Details</h2>
+    <form id="editCustomerForm" class="edit-modal-form" method="post" action="{% url 'aquaguard:admin-edit-customer-profile' customer.id 0 %}">
+      {% csrf_token %}
+      <div>
+        <label>Phone</label>
+        <input type="text" name="phone_number" value="{{ customer.phone_number }}" required />
+      </div>
+  
+      <div>
+        <label>Device Token</label>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="text" id="edit-token-field" name="device_token" value="{{ customer.device_token }}" readonly />
+          <button type="button" id="generate-token-btn" style="background: #0ea5e9; color: #fff; border: none; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-weight: 600;">Generate Token</button>
+        </div>
+      </div>
+      <div>
+        <label>Device Chip ID</label>
+        <input type="text" name="device_chip_id" value="{{ customer.device_chip_id }}" required />
+      </div>
+      <div>
+        <label>Board</label>
+        <select name="board">
+          {% for value, label in board_options %}
+            <option value="{{ value }}" {% if customer.board == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Firmware Version</label>
+        <input type="text" name="ota_version" value="{{ customer.ota_version|default:customer.firmware_version }}" />
+      </div>
+      <div>
+        <label>Family Members</label>
+        <input type="number" name="number_of_family_members" value="{{ customer.number_of_family_members }}" min="1" required />
+      </div>
+      <div>
+        <label>Customer Type</label>
+        <select name="customer_type">
+          {% for value, label in customer_type_choices %}
+            <option value="{{ value }}" {% if customer.customer_type == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Paisa per Litre</label>
+        <input type="number" step="0.01" name="paisa_per_litre" value="{{ customer.paisa_per_litre|default:'' }}" min="0" required />
+      </div>
+      <div>
+        <label>Customer Address</label>
+        <input type="text" name="customer_address" value="{{ customer.customer_address }}" />
+      </div>
+   
+      <button type="submit">Save Changes</button>
+    </form>
+  </div>
+</div>
+<script>
+function openEditCustomerModal() {
+  document.getElementById('editCustomerModal').style.display = 'flex';
+}
+function closeEditCustomerModal() {
+  document.getElementById('editCustomerModal').style.display = 'none';
+}
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var generateBtn = document.getElementById('generate-token-btn');
+  if (generateBtn) {
+    generateBtn.onclick = function() {
+      var customerId = {{ customer.id }};
+      fetch('/api/customer/generate-token/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'customer_id=' + encodeURIComponent(customerId)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          document.getElementById('edit-token-field').value = data.device_token || data.token;
+        } else {
+          alert('Error: ' + data.error);
+        }
+      });
+    };
+  }
+});
+</script>

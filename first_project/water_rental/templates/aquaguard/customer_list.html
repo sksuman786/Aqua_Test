@@ -1,0 +1,305 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}All Customers - AquaGuard{% endblock %}
+
+{% block content %}
+<style>
+    .customers-page {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        color: white;
+        padding: 40px 30px;
+        min-height: 100vh;
+        margin-left: 0;
+        width: 100%;
+        border-radius: 0;
+    }
+
+    .container {
+        max-width: 100%;
+        margin: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        font-size: 32px;
+        margin-bottom: 10px;
+    }
+
+    .customers-table {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .customers-table thead {
+        background: rgba(14, 165, 233, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .customers-table th {
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 13px;
+        text-transform: uppercase;
+        color: #0ea5e9;
+        letter-spacing: 0.5px;
+    }
+
+    .customers-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 14px;
+    }
+
+    .customers-table tbody tr:hover {
+        background: rgba(14, 165, 233, 0.05);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-online {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status-offline {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .recharge-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .recharge-green {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+    }
+
+    .recharge-yellow {
+        background: rgba(250, 204, 21, 0.2);
+        color: #fef08a;
+    }
+
+    .recharge-red {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+    }
+
+    .action-link {
+        color: #0ea5e9;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s;
+    }
+
+    .action-link:hover {
+        color: #06b6d4;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 30px;
+    }
+
+    .pagination a, .pagination .page-current {
+        padding: 8px 12px;
+        border-radius: 6px;
+        background: rgba(14, 165, 233, 0.1);
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        color: #0ea5e9;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .pagination a:hover {
+        background: rgba(14, 165, 233, 0.2);
+    }
+
+    .pagination .page-current {
+        background: rgba(14, 165, 233, 0.3);
+        border-color: #0ea5e9;
+    }
+
+    .back-link {
+        color: #0ea5e9;
+        text-decoration: none;
+        margin-bottom: 20px;
+        display: inline-block;
+        font-weight: 600;
+        transition: color 0.3s;
+    }
+
+    .back-link:hover {
+        color: #06b6d4;
+    }
+</style>
+
+<div class="customers-page">
+    <div class="container">
+        <a href="{% url 'aquaguard:admin-dashboard' %}" class="back-link">← Back to Dashboard</a>
+
+        <div class="page-header">
+            <h1>Customer Management</h1>
+            <p style="opacity: 0.8;">Total Customers: {{ page_obj.paginator.count }}</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div style="margin-bottom: 30px;">
+            <form method="get" action="" style="display: flex; gap: 10px; max-width: 600px;">
+                <input type="text" name="search" placeholder="Search by name, email, phone, device ID or address..." 
+                       value="{{ search_query }}"
+                       style="flex: 1; padding: 12px 20px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); color: white; font-size: 14px;">
+                <button type="submit" style="padding: 12px 30px; background: #0ea5e9; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                    Search
+                </button>
+                {% if search_query %}
+                <a href="?" style="padding: 12px 20px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; border-radius: 8px; text-decoration: none; font-weight: 600; display: flex; align-items: center;">
+                    ✕ Clear
+                </a>
+                {% endif %}
+            </form>
+            {% if search_query %}
+            <p style="margin-top: 10px; color: #0ea5e9; font-size: 14px;">
+                Searching for: "{{ search_query }}" - {{ customers|length }} result{{ customers|length|pluralize }}
+            </p>
+            {% endif %}
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="customers-table">
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Device Status</th>
+                        <th>Price per litre (Paisa)</th>
+                        <th>Last Recharge</th>
+                        <th>Days Remaining</th>
+                        <th>Recharge Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr style="{% if customer.is_out_of_date %}background: rgba(239, 68, 68, 0.15);{% elif customer.days_remaining <= 7 %}background: rgba(250, 204, 21, 0.15);{% endif %}">
+                        <td style="font-weight: 600;">{{ customer.name }}</td>
+                        <td>{{ customer.email }}</td>
+                        <td>{{ customer.phone_number }}</td>
+                        <td>
+                            <span class="status-badge {% if customer.device_status == 'online' %}status-online{% else %}status-offline{% endif %}">
+                                {{ customer.device_status }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if customer.paisa_per_litre %}
+                                {{ customer.paisa_per_litre|floatformat:2 }}
+                            {% else %}
+                                <span style="color: #999;">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if customer.last_recharge_date %}
+                                {{ customer.last_recharge_date|date:"M d, Y" }}
+                            {% else %}
+                                <span style="color: #999;">Never</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if customer.is_out_of_date %}
+                                <span style="color: #ef4444; font-weight: 600;">Expired</span>
+                            {% else %}
+                                <span style="color: #22c55e;">{{ customer.days_remaining }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="recharge-badge recharge-{{ customer.recharge_status_color }}">
+                                {% if customer.recharge_status_color == 'red' %}
+                                    OVERDUE
+                                {% elif customer.recharge_status_color == 'yellow' %}
+                                    WARNING
+                                {% else %}
+                                    ACTIVE
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'aquaguard:customer-details' customer.id %}" class="action-link">View Details →</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px; opacity: 0.6;">
+                            No customers found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">« First</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">‹ Previous</a>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="page-current">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next ›</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last »</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Quick Actions -->
+        <div style="margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <a href="{% url 'aquaguard:customer-list' %}" style="background: #0ea5e9; color: white; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; transition: all 0.3s;">
+                View All Customers
+            </a>
+            <a href="{% url 'aquaguard:sensor-data' %}" style="background: rgba(14, 165, 233, 0.2); color: #0ea5e9; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; border: 1px solid #0ea5e9; transition: all 0.3s;">
+                Sensor Data Dashboard
+            </a>
+            <a href="{% url 'aquaguard:payment-history' %}" style="background: rgba(14, 165, 233, 0.2); color: #0ea5e9; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; border: 1px solid #0ea5e9; transition: all 0.3s;">
+                Payment History
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'aquaguard/base.html' %}
+{% block title %}Edit Customer - AquaGuard{% endblock %}
+{% block content %}
+<div class="container" style="max-width: 600px; margin: 40px auto;">
+    <h2>Edit Customer: {{ customer.name }}</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" value="{{ customer.name }}" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="phone_number">Phone Number</label>
+            <input type="text" id="phone_number" name="phone_number" value="{{ customer.phone_number }}" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="customer_address">Address</label>
+            <textarea id="customer_address" name="customer_address" class="form-control">{{ customer.customer_address }}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="paisa_per_litre_override">Paisa/Litre (Override)</label>
+            <input type="number" step="0.01" id="paisa_per_litre_override" name="paisa_per_litre_override" value="{{ customer.paisa_per_litre_override|default:'' }}" class="form-control">
+            <small style="color: #718096; display: block; margin-top: 5px;">Set a custom paisa/litre for this customer. Leave blank to use plan default.</small>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{% url 'aquaguard:customer-details' customer.id %}" class="btn btn-secondary" style="margin-left: 10px;">Cancel</a>
+    </form>
+</div>
+{% endblock %}

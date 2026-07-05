@@ -1,0 +1,249 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}Complaint Status - AquaGuard{% endblock %}
+
+{% block content %}
+<style>
+    .status-page {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        color: white;
+        padding: 40px 30px;
+        min-height: 100vh;
+        width: 100%;
+    }
+
+    .status-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+
+    .page-header p {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .complaints-table {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow-x: auto;
+        margin-bottom: 30px;
+    }
+
+    .complaints-table thead {
+        background: rgba(14, 165, 233, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .complaints-table th {
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 13px;
+        text-transform: uppercase;
+        color: #0ea5e9;
+        letter-spacing: 0.5px;
+    }
+
+    .complaints-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 14px;
+    }
+
+    .complaints-table tbody tr:hover {
+        background: rgba(14, 165, 233, 0.05);
+    }
+
+    .complaints-table tbody tr.highlight {
+        background: rgba(34, 197, 94, 0.1);
+        border-left: 4px solid #22c55e;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-open {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .status-in_progress {
+        background: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .status-resolved {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status-closed {
+        background: rgba(107, 114, 128, 0.2);
+        color: #d1d5db;
+        border: 1px solid rgba(107, 114, 128, 0.3);
+    }
+
+    .ticket-number {
+        font-family: monospace;
+        font-weight: 600;
+        color: #0ea5e9;
+        font-size: 16px;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(16, 185, 129, 0.4);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        opacity: 0.6;
+    }
+
+    .empty-state h3 {
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        font-size: 16px;
+    }
+
+    @media screen and (max-width: 768px) {
+        .status-page {
+            padding: 20px 15px;
+        }
+
+        .complaints-table {
+            font-size: 12px;
+        }
+
+        .complaints-table th,
+        .complaints-table td {
+            padding: 10px 8px;
+        }
+    }
+</style>
+
+<div class="status-page">
+    <div class="status-container">
+        <div class="page-header">
+            <h1>📋 Complaint Status</h1>
+            <p>Track the status of your submitted complaints</p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 30px;">
+            <a href="{% url 'aquaguard:customer-complaint' %}" class="btn-submit">📝 Submit New Complaint</a>
+        </div>
+
+        {% if complaints %}
+            <table class="complaints-table">
+                <thead>
+                    <tr>
+                        <th>Ticket #</th>
+                        <th>Problem</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Filed Date</th>
+                        <th>Assigned To</th>
+                        <th>Last Updated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for complaint in complaints %}
+                    <tr class="{% if highlight and highlight.id == complaint.id %}highlight{% endif %}">
+                        <td><span class="ticket-number">{{ complaint.ticket_number }}</span></td>
+                        <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis;">
+                            {{ complaint.problem_statement|truncatewords:10 }}
+                        </td>
+                        <td>
+                            <span class="status-badge status-{{ complaint.status|lower }}">
+                                {{ complaint.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge priority-{{ complaint.priority|lower }}" style="
+                                {% if complaint.priority == 'low' %}background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3);{% endif %}
+                                {% if complaint.priority == 'medium' %}background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3);{% endif %}
+                                {% if complaint.priority == 'high' %}background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);{% endif %}
+                                {% if complaint.priority == 'critical' %}background: rgba(147, 51, 234, 0.2); color: #9333ea; border: 1px solid rgba(147, 51, 234, 0.3);{% endif %}
+                            ">
+                                {{ complaint.get_priority_display }}
+                            </span>
+                        </td>
+                        <td style="font-size: 12px;">
+                            {{ complaint.complain_date|date:"d M Y, H:i" }}
+                        </td>
+                        <td>
+                            {% if complaint.assigned_person %}
+                                <div style="color: #0ea5e9;">
+                                    <strong>{{ complaint.assigned_person.name }}</strong><br>
+                                    <small style="color: rgba(14, 165, 233, 0.7);">
+                                        📞 {{ complaint.assigned_person.phone_number }}<br>
+                                        ✉️ {{ complaint.assigned_person.email }}
+                                    </small>
+                                </div>
+                            {% else %}
+                                <span style="color: rgba(255, 255, 255, 0.5);">Not assigned</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 12px;">
+                            {% if complaint.closed_date %}
+                                {{ complaint.closed_date|date:"d M Y, H:i" }}
+                            {% elif complaint.assigned_at %}
+                                {{ complaint.assigned_at|date:"d M Y, H:i" }}
+                            {% else %}
+                                {{ complaint.complain_date|date:"d M Y, H:i" }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <h3>No Complaints Found</h3>
+                <p>You haven't submitted any complaints yet.</p>
+                <a href="{% url 'aquaguard:customer-complaint' %}" class="btn-submit" style="margin-top: 20px;">Submit Your First Complaint</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

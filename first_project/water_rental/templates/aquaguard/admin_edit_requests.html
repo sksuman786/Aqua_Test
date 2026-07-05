@@ -1,0 +1,256 @@
+{% extends 'aquaguard/base.html' %}
+
+{% block title %}Profile Edit Requests - Admin{% endblock %}
+
+{% block content %}
+<style>
+    .page-container {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%);
+        min-height: 100vh;
+        padding: 40px 30px;
+        color: white;
+    }
+
+    .header-section {
+        margin-bottom: 30px;
+    }
+
+    .header-section h1 {
+        font-size: 32px;
+        margin-bottom: 10px;
+    }
+
+    .filter-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .filter-tab {
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: white;
+        background: rgba(255, 255, 255, 0.1);
+        transition: all 0.3s;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .filter-tab.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: transparent;
+    }
+
+    .filter-tab:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .requests-grid {
+        display: grid;
+        gap: 20px;
+    }
+
+    .request-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 25px;
+        transition: transform 0.3s;
+    }
+
+    .request-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .request-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 15px;
+    }
+
+    .customer-info h3 {
+        font-size: 20px;
+        margin-bottom: 5px;
+    }
+
+    .customer-info p {
+        color: #94a3b8;
+        font-size: 14px;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-pending {
+        background: rgba(250, 204, 21, 0.2);
+        color: #facc15;
+        border: 1px solid rgba(250, 204, 21, 0.3);
+    }
+
+    .status-approved {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status-rejected {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .request-message {
+        background: rgba(14, 165, 233, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border-left: 3px solid #0ea5e9;
+    }
+
+    .request-meta {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 15px;
+        font-size: 14px;
+        color: #94a3b8;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.3s;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-success {
+        background: #22c55e;
+        color: white;
+    }
+
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #94a3b8;
+    }
+
+    .empty-state svg {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="page-container">
+    <a href="{% url 'aquaguard:admin-dashboard' %}" style="color: #0ea5e9; text-decoration: none; margin-bottom: 20px; display: inline-block;">← Back to Dashboard</a>
+
+    <div class="header-section">
+        <h1>📝 Profile Edit Requests</h1>
+        <p style="color: #94a3b8;">Review and process customer profile edit requests</p>
+    </div>
+
+    <div class="filter-tabs">
+        <a href="?status=pending" class="filter-tab {% if status_filter == 'pending' %}active{% endif %}">
+            ⏳ Pending
+        </a>
+        <a href="?status=approved" class="filter-tab {% if status_filter == 'approved' %}active{% endif %}">
+            ✅ Approved
+        </a>
+        <a href="?status=rejected" class="filter-tab {% if status_filter == 'rejected' %}active{% endif %}">
+            ❌ Rejected
+        </a>
+        <a href="?status=all" class="filter-tab {% if status_filter == 'all' %}active{% endif %}">
+            📋 All
+        </a>
+    </div>
+
+    <div class="requests-grid">
+        {% if edit_requests %}
+            {% for request in edit_requests %}
+            <div class="request-card">
+                <div class="request-header">
+                    <div class="customer-info">
+                        <h3>{{ request.customer.name }}</h3>
+                        <p>{{ request.customer.email }} • {{ request.customer.phone_number }}</p>
+                    </div>
+                    <div>
+                        <span class="status-badge status-{{ request.status }}">{{ request.get_status_display }}</span>
+                    </div>
+                </div>
+
+                <div class="request-meta">
+                    <span>📅 Requested: {{ request.requested_at|date:"M d, Y H:i" }}</span>
+                    {% if request.processed_at %}
+                    <span>✅ Processed: {{ request.processed_at|date:"M d, Y H:i" }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="request-message">
+                    <strong style="display: block; margin-bottom: 5px; color: #0ea5e9;">Customer's Request:</strong>
+                    <p style="margin: 0;">{{ request.request_message }}</p>
+                </div>
+
+                {% if request.admin_notes %}
+                <div style="background: rgba(100, 100, 100, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <strong style="display: block; margin-bottom: 5px;">Admin Notes:</strong>
+                    <p style="margin: 0; color: #cbd5e0;">{{ request.admin_notes }}</p>
+                    {% if request.processed_by %}
+                    <p style="margin: 5px 0 0; font-size: 12px; color: #94a3b8;">Processed by: {{ request.processed_by }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="action-buttons">
+                    {% if request.status == 'pending' %}
+                        <a href="{% url 'aquaguard:admin-process-edit-request' request.id %}" class="btn btn-primary">
+                            Review Request
+                        </a>
+                    {% else %}
+                        <a href="{% url 'aquaguard:customer-details' request.customer.id %}" class="btn btn-primary">
+                            View Customer Profile
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div style="font-size: 64px; margin-bottom: 20px;">📭</div>
+                <h2 style="margin-bottom: 10px;">No {{ status_filter }} requests</h2>
+                <p>There are no {{ status_filter }} profile edit requests at the moment.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
